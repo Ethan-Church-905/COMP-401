@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-
-bash -lc '
 set -e
 
 section(){ printf "\n== %s ==\n" "$1"; }
@@ -69,4 +67,3 @@ fi
 
 echo
 echo "Done."
-'
