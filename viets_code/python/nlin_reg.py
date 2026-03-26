@@ -96,7 +96,7 @@ def main():
         nib.save(nib.Nifti1Image(warped_img.astype(np.float32), static_affine), 
                 path_warped_img)
     
-def flirt(path_static_data, path_moving_data, type_moving_data, basename
+def flirt(path_static_data, path_moving_data, type_moving_data, basename,
           cost="mutualinfo"):
     
     # Initialize transform object and selecting the paramaters for FLIRT

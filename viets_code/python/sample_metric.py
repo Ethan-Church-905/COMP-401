@@ -7,13 +7,13 @@ DIPY. It executes the following steps:
 
     1. For each patient,
         
-        a. It loads the left nad right CST and calculates the centroid streamline 
-        for the both tracts. Thisc an be though of as the 'average streamline'.
+        a. It loads the left and right CST and calculates the centroid streamline 
+        for the both tracts. This can be thought of as the 'average streamline'.
         
         b. It reorients all the streamlines so that they all follow the same 
         direction, either from the brainstem to the motor cortex or the other 
-        way around. The direction is depends on the centroid streamline and will 
-        vary from patient to patient,so you will have to verify that all patients 
+        way around. The direction depends on the centroid streamline and will 
+        vary from patient to patient, so you will have to verify that all patients 
         follow the same direction. For example, if one patient has streamlines going
         from the motor cortex to the brainstem while all other patients have
         streamlines going from the brain stem to the motor cortex, then you will
