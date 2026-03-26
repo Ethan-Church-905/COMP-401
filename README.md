@@ -6,13 +6,13 @@ Winter 2026 COMP 401 Project
 2. Compute and track DWI metrics of along-tract MS pathology
 3. Correlate along-tract MS pathology with metrics of cortical MS pathology
 
-### file setup ###
+### Data Setup ###
 The data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
 
 Preprocessing Bash scripts are in the 'preprocessing' directory
 These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
 
-### file structure ###
+### Project Structure ###
 
 ├── env_utils/                                  # Folder containing environment setup scripts. 
 ├── misc/                                       # Folder containing temporary code that was tried.
@@ -36,7 +36,7 @@ These scripts are called by the scheduling scripts in the 'scheduler_scripts' di
 
 - These steps are performed by the scheduler script ___.sh and __.sh
 
-### Analyis pathway ###
+### Analyis Pathway ###
 1. Sample the DWI metrics along the tract at some number of locations(100?) 
 2. Compare to MTsat and cortical thickness from 7T space
 
