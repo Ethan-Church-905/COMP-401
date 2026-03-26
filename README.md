@@ -14,17 +14,17 @@ These scripts are called by the scheduling scripts in the 'scheduler_scripts' di
 
 ### Project Structure ###
 
-├── env_utils/                                  # Folder containing environment setup scripts. 
-├── misc/                                       # Folder containing temporary code that was tried.
-├── src/                                        # Source code folder
-│   ├── analysis                                # Folder containing code for statistical analysis
-│   │   ├── 
-│   ├── preprocessing                           # Folder containing all preprocessing scripts.
-│   │   ├── 
-│   └── scheduler_scripts                       # Folder containing SGE scripts used in the project. 
-│       ├──  
-├── viets_code/                                 # Code taken directly from Viet's work
-└── readme.md                                   # README file (this file)
+├── env_utils/                                  # Folder containing environment setup scripts.  
+├── misc/                                       # Folder containing temporary code that was tried.  
+├── src/                                        # Source code folder. 
+│   ├── analysis                                # Folder containing code for statistical analysis. 
+│   │   ├──. 
+│   ├── preprocessing                           # Folder containing all preprocessing scripts.  
+│   │   ├──. 
+│   └── scheduler_scripts                       # Folder containing SGE scripts used in the project.   
+│       ├──.     
+├── viets_code/                                 # Code taken directly from Viet's work. 
+└── readme.md                                   # README file (this file). 
 
 
 ### Preprocessing Pipeline ###
