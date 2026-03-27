@@ -12,7 +12,8 @@
 # Expected directory / filename layout per subject:
 #   T1 / FreeSurfer (after fs_segmentation + conversion of brain.mgz):
 #       <FREESURFER_SUBJECTS_DIR>/<SUBJECT>/mri/brain.nii.gz
-#       <FREESURFER_SUBJECTS_DIR>/<SUBJECT>/mri/roi/
+#   ROIs (after roi_conversion.sh):
+#       <NIFTI_BASE_DIR>/<SUBJECT>/T1/Rois/
 #           aparc+aseg_16_brainstem.nii.gz
 #           aparc+aseg_1024_lh_precentral.nii.gz
 #           aparc+aseg_2024_rh_precentral.nii.gz
@@ -44,7 +45,8 @@ register_subject() {
 	local dwi_dir="$NIFTI_BASE_DIR/$subject_name/$DWI_SUB_DIR"
 	local b0_file="$dwi_dir/${subject_name}_${DWI_SUFFIX}_b0.nii.gz"
 
-	local roi_dir="$SUBJECTS_DIR/$subject_name/mri/roi"
+	# ROIs are now in NIFTI_BASE_DIR/subject/T1/Rois/ per organizational setup
+	local roi_dir="$NIFTI_BASE_DIR/$subject_name/T1/Rois"
 	local roi_bs="$roi_dir/aparc+aseg_16_brainstem.nii.gz"
 	local roi_mc_lh="$roi_dir/aparc+aseg_1024_lh_precentral.nii.gz"
 	local roi_mc_rh="$roi_dir/aparc+aseg_2024_rh_precentral.nii.gz"
@@ -73,9 +75,8 @@ register_subject() {
 	local file_roi_mc_lh="$roi_mc_lh"  # Left motor cortex (precentral) mask
 	local file_roi_mc_rh="$roi_mc_rh"  # Right motor cortex (precentral) mask
 
-	# Determine the base directory for file output
-	local parent
-	parent="$(dirname "$file_t1w")"
+	# Output registered ROIs to T1/Rois/ directory per organizational setup
+	local output_dir="$roi_dir"
 
 	# Determine the names of each of these files
 	local t1w_name
@@ -90,8 +91,8 @@ register_subject() {
 
 	# Make a tmp folder that will be deleted at the end of the script
 	local tmp_dir
-	mkdir -p "$parent/${t1w_name}_T1w_2_DWI_tmp"
-	tmp_dir="$parent/${t1w_name}_T1w_2_DWI_tmp"
+	mkdir -p "$output_dir/${t1w_name}_T1w_2_DWI_tmp"
+	tmp_dir="$output_dir/${t1w_name}_T1w_2_DWI_tmp"
 
 	# 1. Register DWI_b0 to T1w using FLIRT; we obtain the matrix DWI_b0_reg_2_T1w
 	flirt -dof 6 -cost mutualinfo \
@@ -106,20 +107,20 @@ register_subject() {
 	# 3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_DTIsp
 	mrtransform -quiet "$file_t1w" \
 		-inverse -linear "$tmp_dir/DWI_b0_reg_2_T1w_tmp.txt" \
-		"$parent/${t1w_name}_DTIsp.nii.gz"
+		"$output_dir/${t1w_name}_DTIsp.nii.gz"
 
 	# 4. Apply the inverse of the DWI_b0_reg_2_T1w matrix to label masks
 	mrtransform -quiet "$file_roi_bs" \
 		-inverse -linear "$tmp_dir/DWI_b0_reg_2_T1w_tmp.txt" \
-		"$parent/${roi_bs_name}_DTIsp.nii.gz"
+		"$output_dir/${roi_bs_name}_DTIsp.nii.gz"
 
 	mrtransform -quiet "$file_roi_mc_lh" \
 		-inverse -linear "$tmp_dir/DWI_b0_reg_2_T1w_tmp.txt" \
-		"$parent/${roi_mc_lh_name}_DTIsp.nii.gz"
+		"$output_dir/${roi_mc_lh_name}_DTIsp.nii.gz"
 
 	mrtransform -quiet "$file_roi_mc_rh" \
 		-inverse -linear "$tmp_dir/DWI_b0_reg_2_T1w_tmp.txt" \
-		"$parent/${roi_mc_rh_name}_DTIsp.nii.gz"
+		"$output_dir/${roi_mc_rh_name}_DTIsp.nii.gz"
 
 	# Remove tmp folder
 	rm -r "$tmp_dir"

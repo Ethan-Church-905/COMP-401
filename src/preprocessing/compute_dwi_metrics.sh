@@ -17,14 +17,18 @@ SUBJECT_ID="$4"
 parent="$(dirname "$DWI_FILE")"
 dwi_name="$(basename ${DWI_FILE%.nii*})"
 
+# Output metrics to DWI/Metrics/ subdirectory per organizational setup
+metrics_dir="$parent/Metrics"
+mkdir -p "$metrics_dir"
+
 generate_maps(){
     # Generate the metric maps. This command is from MRtrix.
     dwi2tensor $DWI_FILE - -fslgrad $BVEC_FILE $BVAL_FILE | \
     tensor2metric - \
-    -adc $parent/${dwi_name}_md.nii.gz \
-    -ad $parent/${dwi_name}_ad.nii.gz \
-    -rd $parent/${dwi_name}_rd.nii.gz \
-    -fa $parent/${dwi_name}_fa.nii.gz
+    -adc $metrics_dir/${dwi_name}_md.nii.gz \
+    -ad $metrics_dir/${dwi_name}_ad.nii.gz \
+    -rd $metrics_dir/${dwi_name}_rd.nii.gz \
+    -fa $metrics_dir/${dwi_name}_fa.nii.gz
 }
 
 if [ -n "$SUBJECT_ID" ]; then

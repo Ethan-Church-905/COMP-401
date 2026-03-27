@@ -7,12 +7,31 @@ Winter 2026 COMP 401 Project
 3. Correlate along-tract MS pathology with metrics of cortical MS pathology
 
 ### Data Setup ###
-The data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
-T1 Data should be in folder: /data/rudko/Ethan_COMP401/HC_EDL_039_27-07-22_3T/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
-DWI 
 
-Preprocessing Bash scripts are in the 'preprocessing' directory
-These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
+├── ~/Data/                                  
+│   ├── subject_ID/                          
+│   │   ├── T1/
+│   │   │   ├── {Raw_T1}.nii
+│   │   │   ├── {FreeSurfer_Processed_T1}.nii
+│   │   │   ├── Rois/
+│   │   │   │   ├── {Raw_Rois}.nii
+│   │   │   │   ├── {Registered_Rois}.nii
+│   │   ├── DWI/
+│   │   │   ├── {Raw_DWI}.nii
+│   │   │   ├── {Brain_Extracted_DWI}.nii
+│   │   │   ├── Metrics/
+│   │   │   │   ├── {DWI_Metrics}.nii
+│   │   ├── Tractography/
+│   │   │   ├── {all_tractography_files}
+
+
+- The raw data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
+- T1 Data should be in folder: /data/rudko/Ethan_COMP401/HC_EDL_039_27-07-22_3T/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
+- DWI DAta is in the folder /cmrr_mbep2d_diff_acc6_b2500
+- Preprocessing Bash scripts are in the 'preprocessing' directory
+- These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
+
+
 
 ### Project Structure ###
 
@@ -41,6 +60,7 @@ These scripts are called by the scheduling scripts in the 'scheduler_scripts' di
 ### Analyis Pathway ###
 1. Sample the DWI metrics along the tract at some number of locations(100?) 
 2. Compare to MTsat and cortical thickness from 7T space
+
 
 
 

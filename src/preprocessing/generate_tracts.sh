@@ -20,28 +20,26 @@
 #       <SUBJECT>_<DWI_SUFFIX>_b0_noskull_mask.nii.gz   (from dwi_bet.sh)
 #       (fallbacks: _b0_noskull.nii.gz, _b0.nii.gz)
 #
-#   FreeSurfer / ROIs (after fs_segmentation.sh + roi_conversion.sh + roi_registration.sh):
-#     <FREESURFER_SUBJECTS_DIR>/<SUBJECT>/mri/
+#   ROIs in DWI space (after roi_conversion.sh + roi_registration.sh):
+#     <NIFTI_BASE_DIR>/<SUBJECT>/T1/Rois/
 #       aparc+aseg_16_brainstem_DTIsp.nii.gz
 #       aparc+aseg_1024_lh_precentral_DTIsp.nii.gz
 #       aparc+aseg_2024_rh_precentral_DTIsp.nii.gz
 #
 
-if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-    echo "Usage: $0 <NIFTI_BASE_DIR> <DWI_SUB_DIR> <DWI_SUFFIX> <FREESURFER_SUBJECTS_DIR> [<SUBJECT_ID>]"
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+    echo "Usage: $0 <NIFTI_BASE_DIR> <DWI_SUB_DIR> <DWI_SUFFIX> [<SUBJECT_ID>]"
     exit 1
 fi
 
 NIFTI_BASE_DIR="$1"      # e.g., /path/to/nifti
 DWI_SUB_DIR="$2"         # e.g., DWI
 DWI_SUFFIX="$3"          # e.g., DWI
-SUBJECTS_DIR="$4"        # FreeSurfer SUBJECTS_DIR
-SUBJECT_ID="$5"          # optional
+SUBJECT_ID="$4"          # optional
 
 echo "DWI NIfTI base directory: $NIFTI_BASE_DIR"
 echo "DWI subdirectory: $DWI_SUB_DIR"
 echo "DWI file suffix: $DWI_SUFFIX"
-echo "FreeSurfer SUBJECTS_DIR: $SUBJECTS_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 process_subject() {
@@ -62,8 +60,8 @@ process_subject() {
         file_b0="$dwi_dir/${subject_name}_${DWI_SUFFIX}_b0.nii.gz"
     fi
 
-    # ROIs in DWI space (DTIsp) from roi_registration.sh
-    local dir_roi="$SUBJECTS_DIR/$subject_name/mri"
+    # ROIs in DWI space (DTIsp) from roi_registration.sh - now in T1/Rois/
+    local dir_roi="$NIFTI_BASE_DIR/$subject_name/T1/Rois"
     local roi_bs="$dir_roi/aparc+aseg_16_brainstem_DTIsp.nii.gz"
     local roi_mc_lh="$dir_roi/aparc+aseg_1024_lh_precentral_DTIsp.nii.gz"
     local roi_mc_rh="$dir_roi/aparc+aseg_2024_rh_precentral_DTIsp.nii.gz"
@@ -92,12 +90,12 @@ process_subject() {
     local name="$subject_name"
     echo "Generating CST tracts for subject $subject_name"
 
-    local parent
-    parent="$(dirname "$file_dwi")"
-    mkdir -p "$parent/constrained_spherical_deconvolution_cst"
-    local dir_output="$parent/constrained_spherical_deconvolution_cst"
-    mkdir -p "$parent/seg/cst_tract"
-    local dir_tract="$parent/seg/cst_tract"
+    # Output to Tractography/ directory per organizational setup
+    local tract_base="$NIFTI_BASE_DIR/$subject_name/Tractography"
+    mkdir -p "$tract_base"
+    local dir_output="$tract_base"
+    mkdir -p "$tract_base/cst"
+    local dir_tract="$tract_base"
 
     # 1. Convert the DWI into an uncompressed format.
     mrconvert -quiet -fslgrad "$file_bvec" "$file_bval" -datatype float32 -strides 0,0,0,1 \

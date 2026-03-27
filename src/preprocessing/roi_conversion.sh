@@ -19,17 +19,19 @@
 #        - Caudal middle frontal (L/R)
 #
 # Usage:
-#   roi_conversion.sh <freesurfer_subjects_dir> [<subject_id>]
+#   roi_conversion.sh <freesurfer_subjects_dir> <nifti_base_dir> [<subject_id>]
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-	echo "Usage: $0 <freesurfer_subjects_dir> [<subject_id>]"
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+	echo "Usage: $0 <freesurfer_subjects_dir> <nifti_base_dir> [<subject_id>]"
 	exit 1
 fi
 
 SUBJECTS_DIR="$1"
-SUBJECT_ID="$2"   # optional
+NIFTI_BASE_DIR="$2"
+SUBJECT_ID="$3"   # optional
 
 echo "FreeSurfer SUBJECTS_DIR: $SUBJECTS_DIR"
+echo "NIfTI base directory: $NIFTI_BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 process_subject() {
@@ -58,11 +60,11 @@ process_subject() {
 		fi
 	fi
 
-	local parent
-	parent="$(dirname "$aparc_nifti")"
+	# Output ROIs to NIFTI_BASE_DIR/subject/T1/Rois/ per organizational setup
+	local roi_output_dir="$NIFTI_BASE_DIR/$subject_name/T1/Rois"
 
 	# Creates an output folder
-	mkdir -p "$parent/roi"
+	mkdir -p "$roi_output_dir"
 
 	local file_aparc="$aparc_nifti"
 
@@ -72,69 +74,69 @@ process_subject() {
 	# Brain stem
 	fslmaths "$file_aparc" \
 		-thr 16 -uthr 16 -bin \
-		"$parent/roi/aparc+aseg_16_brainstem.nii.gz"
+		"$roi_output_dir/aparc+aseg_16_brainstem.nii.gz"
 	# Precentral gyrus (LH)
 	fslmaths "$file_aparc" \
 		-thr 1024 -uthr 1024 -bin \
-		"$parent/roi/aparc+aseg_1024_lh_precentral.nii.gz"
+		"$roi_output_dir/aparc+aseg_1024_lh_precentral.nii.gz"
 	# Precentral gyrus (RH)
 	fslmaths "$file_aparc" \
 		-thr 2024 -uthr 2024 -bin \
-		"$parent/roi/aparc+aseg_2024_rh_precentral.nii.gz"
+		"$roi_output_dir/aparc+aseg_2024_rh_precentral.nii.gz"
 
 	# Cingulum:
 	# Isthmus cingulate (LH)
 	fslmaths "$file_aparc" \
 		-thr 1010 -uthr 1010 -bin \
-		"$parent/roi/aparc+aseg_1010_lh_isthmuscingulate.nii.gz"
+		"$roi_output_dir/aparc+aseg_1010_lh_isthmuscingulate.nii.gz"
 	# Isthmus cingulate (RH)
 	fslmaths "$file_aparc" \
 		-thr 2010 -uthr 2010 -bin \
-		"$parent/roi/aparc+aseg_2010_rh_isthmuscingulate.nii.gz"
+		"$roi_output_dir/aparc+aseg_2010_rh_isthmuscingulate.nii.gz"
 	# Rostral anterior cingulate (LH)
 	fslmaths "$file_aparc" \
 		-thr 1026 -uthr 1026 -bin \
-		"$parent/roi/aparc+aseg_1026_lh_rostralanteriorcingulate.nii.gz"
+		"$roi_output_dir/aparc+aseg_1026_lh_rostralanteriorcingulate.nii.gz"
 	# Rostral anterior cingulate (RH)
 	fslmaths "$file_aparc" \
 		-thr 2026 -uthr 2026 -bin \
-		"$parent/roi/aparc+aseg_2026_rh_rostralanteriorcingulate.nii.gz"
+		"$roi_output_dir/aparc+aseg_2026_rh_rostralanteriorcingulate.nii.gz"
 
 	# Anterior thalamic radiation:
 	# Rostral middle frontal (LH)
 	fslmaths "$file_aparc" \
 		-thr 1027 -uthr 1027 -bin \
-		"$parent/roi/aparc+aseg_1027_lh_rostralmiddlefrontal.nii.gz"
+		"$roi_output_dir/aparc+aseg_1027_lh_rostralmiddlefrontal.nii.gz"
 	# Rostral middle frontal (RH)
 	fslmaths "$file_aparc" \
 		-thr 2027 -uthr 2027 -bin \
-		"$parent/roi/aparc+aseg_2027_rh_rostralmiddlefrontal.nii.gz"
+		"$roi_output_dir/aparc+aseg_2027_rh_rostralmiddlefrontal.nii.gz"
 	# Thalamus (Left)
 	fslmaths "$file_aparc" \
 		-thr 10 -uthr 10 -bin \
-		"$parent/roi/aparc+aseg_10_left_thalamus.nii.gz"
+		"$roi_output_dir/aparc+aseg_10_left_thalamus.nii.gz"
 	# Thalamus (Right)
 	fslmaths "$file_aparc" \
 		-thr 49 -uthr 49 -bin \
-		"$parent/roi/aparc+aseg_49_right_thalamus.nii.gz"
+		"$roi_output_dir/aparc+aseg_49_right_thalamus.nii.gz"
 
 	# Superior longitudinal fasciculus:
 	# Supra marginal gyrus (LH)
 	fslmaths "$file_aparc" \
 		-thr 1031 -uthr 1031 -bin \
-		"$parent/roi/aparc+aseg_1031_lh_supramarginal.nii.gz"
+		"$roi_output_dir/aparc+aseg_1031_lh_supramarginal.nii.gz"
 	# Supra marginal gyrus (RH)
 	fslmaths "$file_aparc" \
 		-thr 2031 -uthr 2031 -bin \
-		"$parent/roi/aparc+aseg_2031_rh_supramarginal.nii.gz"
+		"$roi_output_dir/aparc+aseg_2031_rh_supramarginal.nii.gz"
 	# Caudal middle frontal (LH)
 	fslmaths "$file_aparc" \
 		-thr 1003 -uthr 1003 -bin \
-		"$parent/roi/aparc+aseg_1003_lh_caudalmiddlefrontal.nii.gz"
+		"$roi_output_dir/aparc+aseg_1003_lh_caudalmiddlefrontal.nii.gz"
 	# Caudal middle frontal (RH)
 	fslmaths "$file_aparc" \
 		-thr 2003 -uthr 2003 -bin \
-		"$parent/roi/aparc+aseg_2003_rh_caudalmiddlefrontal.nii.gz"
+		"$roi_output_dir/aparc+aseg_2003_rh_caudalmiddlefrontal.nii.gz"
 
 	echo "Finished ROIs for subject $subject_name"
 }
