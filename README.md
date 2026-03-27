@@ -8,21 +8,23 @@ Winter 2026 COMP 401 Project
 
 ### Data Setup ###
 
-├── ~/Data/                                  
-│   ├── subject_ID/                          
-│   │   ├── T1/
-│   │   │   ├── {Raw_T1}.nii
-│   │   │   ├── {FreeSurfer_Processed_T1}.nii
-│   │   │   ├── Rois/
-│   │   │   │   ├── {Raw_Rois}.nii
-│   │   │   │   ├── {Registered_Rois}.nii
-│   │   ├── DWI/
-│   │   │   ├── {Raw_DWI}.nii
-│   │   │   ├── {Brain_Extracted_DWI}.nii
-│   │   │   ├── Metrics/
-│   │   │   │   ├── {DWI_Metrics}.nii
-│   │   ├── Tractography/
-│   │   │   ├── {all_tractography_files}
+```
+~/Data/
+└── subject_ID/
+    ├── T1/
+    │   ├── {Raw_T1}.nii
+    │   ├── {FreeSurfer_Processed_T1}.nii
+    │   └── Rois/
+    │       ├── {Raw_Rois}.nii
+    │       └── {Registered_Rois}.nii
+    ├── DWI/
+    │   ├── {Raw_DWI}.nii
+    │   ├── {Brain_Extracted_DWI}.nii
+    │   └── Metrics/
+    │       └── {DWI_Metrics}.nii
+    └── Tractography/
+        └── {all_tractography_files}
+```
 
 
 - The raw data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
@@ -35,17 +37,16 @@ Winter 2026 COMP 401 Project
 
 ### Project Structure ###
 
-├── env_utils/                                  # Folder containing environment setup scripts.  
-├── misc/                                       # Folder containing temporary code that was tried.  
-├── src/                                        # Source code folder.  
-│   ├── analysis                                # Folder containing code for statistical analysis.  
-│   │   ├──. 
-│   ├── preprocessing                           # Folder containing all preprocessing scripts.  
-│   │   ├──. 
-│   └── scheduler_scripts                       # Folder containing SGE scripts used in the project.   
-│       ├──.     
-├── viets_code/                                 # Code taken directly from Viet's work. 
-└── readme.md                                   # README file (this file). 
+```
+├── env_utils/          # Environment setup scripts
+├── misc/               # Temporary/experimental code
+├── src/                # Source code
+│   ├── analysis/       # Statistical analysis code
+│   ├── preprocessing/  # Preprocessing scripts
+│   └── scheduler_scripts/  # SGE scheduling scripts
+├── viets_code/         # Code from Viet's work
+└── README.md           # This file
+``` 
 
 
 ### Preprocessing Pipeline ###
