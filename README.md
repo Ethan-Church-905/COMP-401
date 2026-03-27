@@ -8,6 +8,8 @@ Winter 2026 COMP 401 Project
 
 ### Data Setup ###
 The data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
+T1 Data should be in folder: /data/rudko/Ethan_COMP401/HC_EDL_039_27-07-22_3T/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
+DWI 
 
 Preprocessing Bash scripts are in the 'preprocessing' directory
 These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
@@ -16,8 +18,8 @@ These scripts are called by the scheduling scripts in the 'scheduler_scripts' di
 
 ├── env_utils/                                  # Folder containing environment setup scripts.  
 ├── misc/                                       # Folder containing temporary code that was tried.  
-├── src/                                        # Source code folder. 
-│   ├── analysis                                # Folder containing code for statistical analysis. 
+├── src/                                        # Source code folder.  
+│   ├── analysis                                # Folder containing code for statistical analysis.  
 │   │   ├──. 
 │   ├── preprocessing                           # Folder containing all preprocessing scripts.  
 │   │   ├──. 
@@ -39,4 +41,6 @@ These scripts are called by the scheduling scripts in the 'scheduler_scripts' di
 ### Analyis Pathway ###
 1. Sample the DWI metrics along the tract at some number of locations(100?) 
 2. Compare to MTsat and cortical thickness from 7T space
+
+
 
