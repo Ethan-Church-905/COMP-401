@@ -47,11 +47,12 @@ convert_subject() {
     mkdir -p "$NIFTI_BASE_DIR/$subject_name/$OUT_SUB_DIR/"
 
     # Find the specified subfolder within the subject's directory
+    # Search for exact match first, then partial match
     local target_folder
-    target_folder=$(find "$subject_path" -type d -name "*-$SEARCH_TERM" | head -n 1)
+    target_folder=$(find "$subject_path" -type d -name "$SEARCH_TERM" | head -n 1)
 
     if [ -z "$target_folder" ]; then
-        target_folder=$(find "$subject_path" -type d -name "*-$SEARCH_TERM*" | head -n 1)
+        target_folder=$(find "$subject_path" -type d -name "*$SEARCH_TERM*" | head -n 1)
         if [ -z "$target_folder" ]; then
             echo "Warning: No '$SEARCH_TERM' folder found for subject $subject_name. Skipping."
             return
@@ -76,7 +77,8 @@ if [ -n "$SUBJECT_ID" ]; then
     # Process single specified subject
     subject_path="$BASE_DICOM_DIR/$SUBJECT_ID"
     if [ -d "$subject_path" ]; then
-        subject_name=$(basename "$subject_path" | sed -E 's/.*-(SF|sf)_?([0-9]+)/SF_\2/' | tr '[:lower:]' '[:upper:]')
+        # Use directory name as subject name (handles HC_*/MS_* format)
+        subject_name=$(basename "$subject_path" | tr '[:lower:]' '[:upper:]')
         convert_subject "$subject_path" "$subject_name"
     else
         echo "Error: Directory for subject $SUBJECT_ID not found in $BASE_DICOM_DIR."
@@ -86,7 +88,8 @@ else
     # Process all subjects in the directory
     for subject_path in "$BASE_DICOM_DIR"/*; do
         if [ -d "$subject_path" ]; then
-            subject_name=$(basename "$subject_path" | sed -E 's/.*-(SF|sf)_?([0-9]+)/SF_\2/' | tr '[:lower:]' '[:upper:]')
+            # Use directory name as subject name (handles HC_*/MS_* format)
+            subject_name=$(basename "$subject_path" | tr '[:lower:]' '[:upper:]')
             convert_subject "$subject_path" "$subject_name"
         fi
     done

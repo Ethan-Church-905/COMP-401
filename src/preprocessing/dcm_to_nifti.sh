@@ -11,19 +11,37 @@
 # 5. File name suffix to use for the converted files (e.g., "version1")
 # 6. Optional subject ID to process a single subject (e.g., "subject01") - if not provided, the script will process all subjects in the specified directories.
 
-DWI_DICOM_DIR=/data/rudko/Ethan_COMP401/{subject}/
-T1_DICOM_DIR=/data/rudko/Ethan_COMP401/{subject}/MP2RAGE_1mm
-NIFTI_BASE_DIR=/data/rudko/Ethan_COMP401/{subject}/preprocessing/nifti_output
+# Base directories
+BASE_DICOM_DIR=/data/rudko/Ethan_COMP401
+NIFTI_BASE_DIR=~/Data
+
+# Output subdirectories
 T1_OUT_SUB_DIR=T1
 DWI_OUT_SUB_DIR=DWI
-T1_FILE_SUFFIX=_T1
-DWI_FILE_SUFFIX=_DWI
-SUBJECT_ID=""  # Set to a specific subject ID to process only that subject, or leave empty to process all subjects
+
+# Search terms to find the correct DICOM folders within each subject
+# T1: {subject_ID}/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
+# DWI: {subject_ID}/cmrr_mbep2d_diff_acc6_b2500
+T1_SEARCH_TERM="MP2RAGE_1mm_UNI_Images_Series0004"
+DWI_SEARCH_TERM="cmrr_mbep2d_diff_acc6_b2500"
+
+# File suffixes for output files
+T1_FILE_SUFFIX=RAW_T1
+DWI_FILE_SUFFIX=RAW_DWI
+
+# Set to a specific subject ID to process only that subject, or leave empty to process all subjects
+SUBJECT_ID=""
 
 echo "Starting DICOM to NIfTI conversion for T1 and DWI scans..."
 
-convert_dicom_to_nifti_T1.sh $T1_DICOM_DIR $T1_DICOM_DIR $NIFTI_BASE_DIR $T1_OUT_SUB_DIR $T1_FILE_SUFFIX [$SUBJECT_ID]
-convert_dicom_to_nifti_dwi.sh $DWI_DICOM_DIR $DWI_DICOM_DIR $NIFTI_BASE_DIR $DWI_OUT_SUB_DIR $DWI_FILE_SUFFIX [$SUBJECT_ID]
+# Call conversion scripts (pass SUBJECT_ID only if it's set)
+if [ -n "$SUBJECT_ID" ]; then
+    convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX" "$SUBJECT_ID"
+    convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX" "$SUBJECT_ID"
+else
+    convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX"
+    convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX"
+fi
 
 echo "DICOM to NIfTI conversion completed for T1 and DWI scans."
 

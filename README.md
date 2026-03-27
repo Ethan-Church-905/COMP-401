@@ -28,8 +28,8 @@ Winter 2026 COMP 401 Project
 
 
 - The raw data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
-- T1 Data should be in folder: /data/rudko/Ethan_COMP401/HC_EDL_039_27-07-22_3T/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
-- DWI DAta is in the folder /cmrr_mbep2d_diff_acc6_b2500
+- T1 Data should be in folder: /data/rudko/Ethan_COMP401/{subject_ID}/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
+- DWI Data is in the folder /data/rudko/Ethan_COMP401/{subject_ID}/cmrr_mbep2d_diff_acc6_b2500
 - Preprocessing Bash scripts are in the 'preprocessing' directory
 - These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
 
