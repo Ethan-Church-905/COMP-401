@@ -46,9 +46,9 @@ for t1_entry in "${T1_FOLDERS[@]}"; do
     echo "Processing T1 folder: $T1_SEARCH_TERM"
     
     if [ -n "$SUBJECT_ID" ]; then
-        convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX" "$SUBJECT_ID"
+        ./convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX" "$SUBJECT_ID"
     else
-        convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX"
+        ./convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX"
     fi
 done
 
@@ -62,9 +62,9 @@ for dwi_entry in "${DWI_FOLDERS[@]}"; do
     echo "Processing DWI folder: $DWI_SEARCH_TERM"
     
     if [ -n "$SUBJECT_ID" ]; then
-        convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX" "$SUBJECT_ID"
+        ./convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX" "$SUBJECT_ID"
     else
-        convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX"
+        ./convert_dicom_to_nifti_dwi.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$DWI_OUT_SUB_DIR" "$DWI_SEARCH_TERM" "$DWI_FILE_SUFFIX"
     fi
 done
 
