@@ -32,7 +32,7 @@ DWI_FOLDERS=(
 )
 
 # Set to a specific subject ID to process only that subject, or leave empty to process all subjects
-SUBJECT_ID="HC_AM_071_15-11-23_3T"
+SUBJECT_ID=""
 
 echo "Starting DICOM to NIfTI conversion for T1 and DWI scans..."
 

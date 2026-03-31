@@ -9,6 +9,7 @@ if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     exit 1
 fi
 
+export CUDA_VISIBLE_DEVICES=""
 # Define input parameters
 NIFTI_BASE_DIR="$1"
 OUTPUT_BASE_DIR="$2"   # Output root for SynthSeg-derived per-subject files
