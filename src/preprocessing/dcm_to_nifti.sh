@@ -5,7 +5,7 @@
 
 # Base directories
 BASE_DICOM_DIR=/data/rudko/Ethan_COMP401
-NIFTI_BASE_DIR=~/Data
+NIFTI_BASE_DIR=/export01/data/Ethan-COMP-401
 
 # Output subdirectories
 T1_OUT_SUB_DIR=T1
@@ -14,8 +14,15 @@ DWI_OUT_SUB_DIR=DWI
 # T1 folders to process (4 total inside {subject_ID}/MP2RAGE_1mm/)
 # Each entry: "SEARCH_TERM:FILE_SUFFIX"
 T1_FOLDERS=(
+<<<<<<< HEAD
     "MP2RAGE_1mm_T1_Images_Series000[0-9]:RAW_T1_T1"
     "MP2RAGE_1mm_UNI_Images_Series000[0-9]:RAW_T1_UNI"
+=======
+    "MP2RAGE_1mm_INV1_Series0002:RAW_T1_INV1"
+    "MP2RAGE_1mm_INV2_Series0003:RAW_T1_INV2"
+    "MP2RAGE_1mm_T1_Images_Series0004:RAW_T1"
+    "MP2RAGE_1mm_UNI_Images_Series0005:RAW_T1_UNI"
+>>>>>>> refs/remotes/origin/main
 )
 
 # DWI folders to process (6 total)

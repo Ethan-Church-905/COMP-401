@@ -13,9 +13,9 @@ import re
 from pathlib import Path
 
 
-path_to_data = '/export01/data/hannabe/Code/data'
-study = 'cihr_test_7t'
-subjects = ['20260313', 'MS_DG_074', '20251014', '20250905']
+path_to_data = '~'
+study = 'Misc_data'
+subjects = ['MS_WEH_023_19-10-22_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
 
 def convert_dcm_to_nii():
