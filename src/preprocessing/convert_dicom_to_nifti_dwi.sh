@@ -46,15 +46,16 @@ convert_subject() {
 
     mkdir -p "$NIFTI_BASE_DIR/$subject_name/$OUT_SUB_DIR/"
 
-    # Find the specified subfolder within the subject's directory
-    # Search for exact match first, then partial match
+    # Find the Series subfolder directly (structure: SEARCH_TERM/SEARCH_TERM_Series00XX/)
+    # The DICOM files reside in the _Series00[0-9][0-9] subfolder, not the parent folder
     local target_folder
-    target_folder=$(find "$subject_path" -type d -name "$SEARCH_TERM" | head -n 1)
+    target_folder=$(find "$subject_path" -mindepth 2 -maxdepth 2 -type d -name "${SEARCH_TERM}_Series00[0-9][0-9]" | head -n 1)
 
     if [ -z "$target_folder" ]; then
-        target_folder=$(find "$subject_path" -type d -name "*$SEARCH_TERM*" | head -n 1)
+        # Fallback: broader search in case series number has more digits
+        target_folder=$(find "$subject_path" -mindepth 2 -maxdepth 2 -type d -name "${SEARCH_TERM}_Series*" | head -n 1)
         if [ -z "$target_folder" ]; then
-            echo "Warning: No '$SEARCH_TERM' folder found for subject $subject_name. Skipping."
+            echo "Warning: No '${SEARCH_TERM}_Series00[0-9][0-9]' subfolder found for subject $subject_name. Skipping."
             return
         fi
     fi
