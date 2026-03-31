@@ -14,10 +14,8 @@ DWI_OUT_SUB_DIR=DWI
 # T1 folders to process (4 total inside {subject_ID}/MP2RAGE_1mm/)
 # Each entry: "SEARCH_TERM:FILE_SUFFIX"
 T1_FOLDERS=(
-    "MP2RAGE_1mm_INV1_Series0002:RAW_T1_INV1"
-    "MP2RAGE_1mm_INV2_Series0003:RAW_T1_INV2"
-    "MP2RAGE_1mm_T1_Images_Series0004:RAW_T1_T1"
-    "MP2RAGE_1mm_UNI_Images_Series0005:RAW_T1_UNI"
+    "MP2RAGE_1mm_T1_Images_Series000[0-9]:RAW_T1_T1"
+    "MP2RAGE_1mm_UNI_Images_Series000[0-9]:RAW_T1_UNI"
 )
 
 # DWI folders to process (6 total)
