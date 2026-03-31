@@ -65,10 +65,10 @@ segment_subject() {
     fi
 
     # Create brainmask/brain image for compatibility with existing tooling.
-    #fslmaths "$aparc_nifti" -bin "$synthseg_brainmask"
-    #fslmaths "$t1_nifti_file" -mul "$synthseg_brainmask" "$synthseg_brain"
+    fslmaths "$aparc_nifti" -bin "$synthseg_brainmask"
+    fslmaths "$t1_nifti_file" -mul "$synthseg_brainmask" "$synthseg_brain"
 
-    #touch "$subject_scripts_dir/synthseg.done"
+    touch "$subject_scripts_dir/synthseg.done"
 }
 
 if [ -n "$SUBJECT_ID" ]; then
