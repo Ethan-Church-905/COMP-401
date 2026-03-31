@@ -7,7 +7,8 @@
 # For each subject, this script:
 #   1. Loads the DWI, bval, bvec, and b0 mask from the NIfTI DWI directory
 #   2. Loads the DWI-space ROIs (brainstem + precentral gyri) registered via
-#      roi_registration.sh (aparc+aseg_*_DTIsp.nii.gz)
+#      roi_registration.sh (aparc+aseg_*_DTIsp.nii.gz), where ROIs originate
+#      from the SynthSeg-based fs_segmentation.sh + roi_conversion.sh pathway
 #   3. Runs MSMT-CSD and generates FODs
 #   4. Generates left/right CST streamlines using the ROIs as seeds/includes
 #

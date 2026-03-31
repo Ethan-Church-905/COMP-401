@@ -5,13 +5,16 @@
 #
 # This script is a multi-subject wrapper around Viet Hoang's original reg_roi
 # script and is designed to be compatible with:
-#   - fs_segmentation.sh (for running FreeSurfer recon-all)
-#   - roi_conversion.sh  (for creating aparc+aseg-based ROI masks)
+#   - fs_segmentation.sh (for running FreeSurfer SynthSeg 2.0)
+#   - roi_conversion.sh  (for creating aparc+aseg-based ROI masks from SynthSeg)
 #   - dwi_bet.sh         (for generating the b=0 DWI image)
 #
 # Expected directory / filename layout per subject:
-#   T1 / FreeSurfer (after fs_segmentation + conversion of brain.mgz):
-#       <FREESURFER_SUBJECTS_DIR>/<SUBJECT>/mri/brain.nii.gz
+#   T1 (input structural image):
+#       <NIFTI_BASE_DIR>/<SUBJECT>/T1/<SUBJECT>_T1.nii.gz
+#
+#   Optional SynthSeg output (for masked T1 registration target):
+#       <SYNTHSEG_SUBJECTS_DIR>/<SUBJECT>/mri/aparc+aseg.nii.gz
 #   ROIs (after roi_conversion.sh):
 #       <NIFTI_BASE_DIR>/<SUBJECT>/T1/Rois/
 #           aparc+aseg_16_brainstem.nii.gz
@@ -22,26 +25,27 @@
 #       <NIFTI_BASE_DIR>/<SUBJECT>/<DWI_SUB_DIR>/<SUBJECT>_<DWI_SUFFIX>_b0.nii.gz
 
 if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-	echo "Usage: $0 <NIFTI_BASE_DIR> <DWI_SUB_DIR> <DWI_SUFFIX> <FREESURFER_SUBJECTS_DIR> [<SUBJECT_ID>]"
+	echo "Usage: $0 <NIFTI_BASE_DIR> <DWI_SUB_DIR> <DWI_SUFFIX> <SYNTHSEG_SUBJECTS_DIR> [<SUBJECT_ID>]"
 	exit 1
 fi
 
 NIFTI_BASE_DIR="$1"          # e.g., /path/to/nifti
 DWI_SUB_DIR="$2"             # e.g., DWI
 DWI_SUFFIX="$3"              # e.g., DWI
-SUBJECTS_DIR="$4"            # FreeSurfer SUBJECTS_DIR
+SUBJECTS_DIR="$4"            # SynthSeg output directory (subject/mri/aparc+aseg.nii.gz)
 SUBJECT_ID="$5"              # optional
 
 echo "DWI NIfTI base directory: $NIFTI_BASE_DIR"
 echo "DWI subdirectory: $DWI_SUB_DIR"
 echo "DWI file suffix: $DWI_SUFFIX"
-echo "FreeSurfer SUBJECTS_DIR: $SUBJECTS_DIR"
+echo "SynthSeg subjects directory: $SUBJECTS_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 register_subject() {
 	local subject_name="$1"
 
-	local t1_file="$SUBJECTS_DIR/$subject_name/mri/brain.nii.gz"
+	local t1_file="$NIFTI_BASE_DIR/$subject_name/T1/${subject_name}_T1.nii.gz"
+	local synthseg_aparc="$SUBJECTS_DIR/$subject_name/mri/aparc+aseg.nii.gz"
 	local dwi_dir="$NIFTI_BASE_DIR/$subject_name/$DWI_SUB_DIR"
 	local b0_file="$dwi_dir/${subject_name}_${DWI_SUFFIX}_b0.nii.gz"
 
@@ -53,7 +57,7 @@ register_subject() {
 
 	# Basic existence checks
 	if [ ! -f "$t1_file" ]; then
-		echo "T1 brain file not found for subject $subject_name at $t1_file. Skipping."
+		echo "T1 file not found for subject $subject_name at $t1_file. Skipping."
 		return
 	fi
 
@@ -69,7 +73,7 @@ register_subject() {
 
 	echo "Registering ROIs to DWI space for subject $subject_name"
 
-	local file_t1w="$t1_file"          # brain.nii.gz (brain.mgz converted to NIfTI)
+	local file_t1w="$t1_file"
 	local file_b0="$b0_file"           # b0 image in DWI space
 	local file_roi_bs="$roi_bs"        # Brain stem mask
 	local file_roi_mc_lh="$roi_mc_lh"  # Left motor cortex (precentral) mask
@@ -93,6 +97,13 @@ register_subject() {
 	local tmp_dir
 	mkdir -p "$output_dir/${t1w_name}_T1w_2_DWI_tmp"
 	tmp_dir="$output_dir/${t1w_name}_T1w_2_DWI_tmp"
+
+	# If SynthSeg aparc is available, use it to build a brain-masked T1 for more robust registration.
+	if [ -f "$synthseg_aparc" ]; then
+		fslmaths "$synthseg_aparc" -bin "$tmp_dir/synthseg_brainmask_tmp.nii.gz"
+		fslmaths "$t1_file" -mul "$tmp_dir/synthseg_brainmask_tmp.nii.gz" "$tmp_dir/${t1w_name}_brain_tmp.nii.gz"
+		file_t1w="$tmp_dir/${t1w_name}_brain_tmp.nii.gz"
+	fi
 
 	# 1. Register DWI_b0 to T1w using FLIRT; we obtain the matrix DWI_b0_reg_2_T1w
 	flirt -dof 6 -cost mutualinfo \

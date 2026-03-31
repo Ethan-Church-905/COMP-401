@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# roi_conversion.sh :: Convert FreeSurfer aparc+aseg segmentations into binary ROI masks
-# for multiple subjects or a single subject, compatible with fs_segmentation.sh output.
+# roi_conversion.sh :: Convert SynthSeg/FreeSurfer aparc+aseg segmentations into
+# binary ROI masks for multiple subjects or a single subject.
 #
-# Expected inputs (matching fs_segmentation.sh):
-#   - FreeSurfer SUBJECTS_DIR containing one folder per subject (e.g. SF_001)
-#   - Each subject directory must contain mri/aparc+aseg.mgz
+# Expected inputs (matching fs_segmentation.sh SynthSeg output):
+#   - SynthSeg output directory containing one folder per subject (e.g. SF_001)
+#   - Each subject directory should contain mri/aparc+aseg.nii.gz
 #
 # For each subject, this script will:
-#   1. Convert aparc+aseg.mgz to NIfTI aparc+aseg.nii.gz (if needed)
+#   1. Load aparc+aseg segmentation from SynthSeg output
 #   2. Extract binary ROIs for:
 #        - Thalamus (L/R)
 #        - Brainstem
@@ -19,10 +19,10 @@
 #        - Caudal middle frontal (L/R)
 #
 # Usage:
-#   roi_conversion.sh <freesurfer_subjects_dir> <nifti_base_dir> [<subject_id>]
+#   roi_conversion.sh <synthseg_subjects_dir> <nifti_base_dir> [<subject_id>]
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-	echo "Usage: $0 <freesurfer_subjects_dir> <nifti_base_dir> [<subject_id>]"
+	echo "Usage: $0 <synthseg_subjects_dir> <nifti_base_dir> [<subject_id>]"
 	exit 1
 fi
 
@@ -30,34 +30,38 @@ SUBJECTS_DIR="$1"
 NIFTI_BASE_DIR="$2"
 SUBJECT_ID="$3"   # optional
 
-echo "FreeSurfer SUBJECTS_DIR: $SUBJECTS_DIR"
+echo "SynthSeg subjects directory: $SUBJECTS_DIR"
 echo "NIfTI base directory: $NIFTI_BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 process_subject() {
 	local subject_name="$1"
 	local subject_dir="$SUBJECTS_DIR/$subject_name"
-	local mgz_file="$subject_dir/mri/aparc+aseg.mgz"
 	local aparc_nifti="$subject_dir/mri/aparc+aseg.nii.gz"
+	local synthseg_parc_nifti="$subject_dir/mri/synthseg_parc.nii.gz"
+	local mgz_file="$subject_dir/mri/aparc+aseg.mgz"
+	local file_aparc=""
 
 	if [ ! -d "$subject_dir" ]; then
 		echo "Subject directory not found: $subject_dir. Skipping."
 		return
 	fi
 
-	if [ ! -f "$mgz_file" ] && [ ! -f "$aparc_nifti" ]; then
-		echo "No aparc+aseg file found for subject $subject_name (expected $mgz_file or $aparc_nifti). Skipping."
-		return
-	fi
-
-	# Convert MGZ to NIfTI if needed
-	if [ ! -f "$aparc_nifti" ]; then
+	if [ -f "$aparc_nifti" ]; then
+		file_aparc="$aparc_nifti"
+	elif [ -f "$synthseg_parc_nifti" ]; then
+		file_aparc="$synthseg_parc_nifti"
+	elif [ -f "$mgz_file" ]; then
 		echo "Converting $mgz_file to NIfTI for subject $subject_name..."
 		mri_convert "$mgz_file" "$aparc_nifti"
 		if [ $? -ne 0 ]; then
 			echo "mri_convert failed for subject $subject_name. Skipping."
 			return
 		fi
+		file_aparc="$aparc_nifti"
+	else
+		echo "No SynthSeg/aparc segmentation found for subject $subject_name (expected $aparc_nifti). Skipping."
+		return
 	fi
 
 	# Output ROIs to NIFTI_BASE_DIR/subject/T1/Rois/ per organizational setup
@@ -65,8 +69,6 @@ process_subject() {
 
 	# Creates an output folder
 	mkdir -p "$roi_output_dir"
-
-	local file_aparc="$aparc_nifti"
 
 	echo "Creating ROIs for subject $subject_name from $file_aparc"
 

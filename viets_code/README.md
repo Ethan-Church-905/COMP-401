@@ -27,7 +27,7 @@ In this project, we attempted to characterize the variability of along-tract MS 
 For this tutorial, we have copied all the scripts into `~/bin/`. This allaws us to use the scripts from anywhere without needing to explicitly write out the path to the script. Equivalently, you can also add the folder containing all the bash scripts to `$PATH`.
 
 ### Required data
-* **DWI images**. If they are in the DICOM format, convert them to NIFTI. Tools like [dcm2niix](https://people.cas.sc.edu/rorden/mricron/dcm2nii.html) can be used.
+* **DWI images**. If they are in the DICOM format, convert them to NIFTI. Tools like [dcm2niix](https://people.cas.sc.edu/rorden/mricron/dcm2nii.html) can be used.b
 * **aparc+aseg.mgz images**. These images are outputs after running Freesurfer's [recon-all](https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all/). Convert these images to NIFTI format using Freesurfer's [mri_convert](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert)
 * **brain.mgz images** These images are outputs after running Freesurfer's [recon-all](https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all/). Convert these images to NIFTI format using Freesurfer's [mri_convert](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert). It is important to note that brain.mgz is in the same space as aparc+aseg.mgz and so we will be using brain.mgz to help transform aparc+aseg.mgz to DWI space.
 * **Lesion masks**. These images will likely be in MINC format. Use the command from MINC toolkit [minc2nii](http://bic-mni.github.io/man-pages/man/mnc2nii.html) to convert to NIFTI.
