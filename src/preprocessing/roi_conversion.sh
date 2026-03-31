@@ -13,6 +13,8 @@
 #        - Thalamus (L/R)
 #        - Brainstem
 #        - Precentral gyrus (L/R)
+#        - Paracentral lobule (L/R)
+#        - Motor cortex (combined precentral + paracentral; L/R)
 #        - Cingulum (isthmus cingulate, rostral anterior cingulate; L/R)
 #        - Rostral middle frontal (L/R)
 #        - Supramarginal gyrus (L/R)
@@ -33,6 +35,36 @@ SUBJECT_ID="$3"   # optional
 echo "SynthSeg subjects directory: $SUBJECTS_DIR"
 echo "NIfTI base directory: $NIFTI_BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
+
+extract_binary_roi() {
+	local aparc_file="$1"
+	local label="$2"
+	local output_file="$3"
+	local label_name="$4"
+
+	echo "  - Extracting $label_name (label $label)"
+	fslmaths "$aparc_file" -thr "$label" -uthr "$label" -bin "$output_file"
+
+	if [ $? -ne 0 ]; then
+		echo "Failed to extract ROI: $label_name"
+		return 1
+	fi
+}
+
+combine_rois() {
+	local roi_a="$1"
+	local roi_b="$2"
+	local output_file="$3"
+	local roi_name="$4"
+
+	echo "  - Combining into $roi_name"
+	fslmaths "$roi_a" -add "$roi_b" -bin "$output_file"
+
+	if [ $? -ne 0 ]; then
+		echo "Failed to combine ROIs for: $roi_name"
+		return 1
+	fi
+}
 
 process_subject() {
 	local subject_name="$1"
@@ -72,73 +104,45 @@ process_subject() {
 
 	echo "Creating ROIs for subject $subject_name from $file_aparc"
 
-	# Corticospinal tract:
-	# Brain stem
-	fslmaths "$file_aparc" \
-		-thr 16 -uthr 16 -bin \
-		"$roi_output_dir/aparc+aseg_16_brainstem.nii.gz"
-	# Precentral gyrus (LH)
-	fslmaths "$file_aparc" \
-		-thr 1024 -uthr 1024 -bin \
-		"$roi_output_dir/aparc+aseg_1024_lh_precentral.nii.gz"
-	# Precentral gyrus (RH)
-	fslmaths "$file_aparc" \
-		-thr 2024 -uthr 2024 -bin \
-		"$roi_output_dir/aparc+aseg_2024_rh_precentral.nii.gz"
+	# Extract single-label ROIs
+	local roi_specs
+	roi_specs=$(cat <<'EOF'
+16|aparc+aseg_16_brainstem.nii.gz|Brainstem
+1024|aparc+aseg_1024_lh_precentral.nii.gz|Precentral gyrus (LH)
+2024|aparc+aseg_2024_rh_precentral.nii.gz|Precentral gyrus (RH)
+1017|aparc+aseg_1017_lh_paracentral.nii.gz|Paracentral lobule (LH)
+2017|aparc+aseg_2017_rh_paracentral.nii.gz|Paracentral lobule (RH)
+1010|aparc+aseg_1010_lh_isthmuscingulate.nii.gz|Isthmus cingulate (LH)
+2010|aparc+aseg_2010_rh_isthmuscingulate.nii.gz|Isthmus cingulate (RH)
+1026|aparc+aseg_1026_lh_rostralanteriorcingulate.nii.gz|Rostral anterior cingulate (LH)
+2026|aparc+aseg_2026_rh_rostralanteriorcingulate.nii.gz|Rostral anterior cingulate (RH)
+1027|aparc+aseg_1027_lh_rostralmiddlefrontal.nii.gz|Rostral middle frontal (LH)
+2027|aparc+aseg_2027_rh_rostralmiddlefrontal.nii.gz|Rostral middle frontal (RH)
+10|aparc+aseg_10_left_thalamus.nii.gz|Thalamus (Left)
+49|aparc+aseg_49_right_thalamus.nii.gz|Thalamus (Right)
+1031|aparc+aseg_1031_lh_supramarginal.nii.gz|Supramarginal gyrus (LH)
+2031|aparc+aseg_2031_rh_supramarginal.nii.gz|Supramarginal gyrus (RH)
+1003|aparc+aseg_1003_lh_caudalmiddlefrontal.nii.gz|Caudal middle frontal (LH)
+2003|aparc+aseg_2003_rh_caudalmiddlefrontal.nii.gz|Caudal middle frontal (RH)
+EOF
+)
 
-	# Cingulum:
-	# Isthmus cingulate (LH)
-	fslmaths "$file_aparc" \
-		-thr 1010 -uthr 1010 -bin \
-		"$roi_output_dir/aparc+aseg_1010_lh_isthmuscingulate.nii.gz"
-	# Isthmus cingulate (RH)
-	fslmaths "$file_aparc" \
-		-thr 2010 -uthr 2010 -bin \
-		"$roi_output_dir/aparc+aseg_2010_rh_isthmuscingulate.nii.gz"
-	# Rostral anterior cingulate (LH)
-	fslmaths "$file_aparc" \
-		-thr 1026 -uthr 1026 -bin \
-		"$roi_output_dir/aparc+aseg_1026_lh_rostralanteriorcingulate.nii.gz"
-	# Rostral anterior cingulate (RH)
-	fslmaths "$file_aparc" \
-		-thr 2026 -uthr 2026 -bin \
-		"$roi_output_dir/aparc+aseg_2026_rh_rostralanteriorcingulate.nii.gz"
+	while IFS='|' read -r label output_name roi_name; do
+		extract_binary_roi "$file_aparc" "$label" "$roi_output_dir/$output_name" "$roi_name" || return
+	done <<< "$roi_specs"
 
-	# Anterior thalamic radiation:
-	# Rostral middle frontal (LH)
-	fslmaths "$file_aparc" \
-		-thr 1027 -uthr 1027 -bin \
-		"$roi_output_dir/aparc+aseg_1027_lh_rostralmiddlefrontal.nii.gz"
-	# Rostral middle frontal (RH)
-	fslmaths "$file_aparc" \
-		-thr 2027 -uthr 2027 -bin \
-		"$roi_output_dir/aparc+aseg_2027_rh_rostralmiddlefrontal.nii.gz"
-	# Thalamus (Left)
-	fslmaths "$file_aparc" \
-		-thr 10 -uthr 10 -bin \
-		"$roi_output_dir/aparc+aseg_10_left_thalamus.nii.gz"
-	# Thalamus (Right)
-	fslmaths "$file_aparc" \
-		-thr 49 -uthr 49 -bin \
-		"$roi_output_dir/aparc+aseg_49_right_thalamus.nii.gz"
+	# Motor cortex (combined precentral + paracentral) per hemisphere
+	combine_rois \
+		"$roi_output_dir/aparc+aseg_1024_lh_precentral.nii.gz" \
+		"$roi_output_dir/aparc+aseg_1017_lh_paracentral.nii.gz" \
+		"$roi_output_dir/aparc+aseg_lh_motorcortex.nii.gz" \
+		"Motor cortex (LH)" || return
 
-	# Superior longitudinal fasciculus:
-	# Supra marginal gyrus (LH)
-	fslmaths "$file_aparc" \
-		-thr 1031 -uthr 1031 -bin \
-		"$roi_output_dir/aparc+aseg_1031_lh_supramarginal.nii.gz"
-	# Supra marginal gyrus (RH)
-	fslmaths "$file_aparc" \
-		-thr 2031 -uthr 2031 -bin \
-		"$roi_output_dir/aparc+aseg_2031_rh_supramarginal.nii.gz"
-	# Caudal middle frontal (LH)
-	fslmaths "$file_aparc" \
-		-thr 1003 -uthr 1003 -bin \
-		"$roi_output_dir/aparc+aseg_1003_lh_caudalmiddlefrontal.nii.gz"
-	# Caudal middle frontal (RH)
-	fslmaths "$file_aparc" \
-		-thr 2003 -uthr 2003 -bin \
-		"$roi_output_dir/aparc+aseg_2003_rh_caudalmiddlefrontal.nii.gz"
+	combine_rois \
+		"$roi_output_dir/aparc+aseg_2024_rh_precentral.nii.gz" \
+		"$roi_output_dir/aparc+aseg_2017_rh_paracentral.nii.gz" \
+		"$roi_output_dir/aparc+aseg_rh_motorcortex.nii.gz" \
+		"Motor cortex (RH)" || return
 
 	echo "Finished ROIs for subject $subject_name"
 }
