@@ -31,7 +31,7 @@ fi
 # Function to process a single subject
 segment_subject() {
     local subject_name="$1"
-    local t1_nifti_file="$NIFTI_BASE_DIR/$subject_name/T1/${subject_name}_T1.nii.gz"
+    local t1_nifti_file="$NIFTI_BASE_DIR/$subject_name/T1/${subject_name}_RAW_T1_T1.nii.gz"
     local subject_mri_dir="$OUTPUT_BASE_DIR/$subject_name/mri"
     local subject_scripts_dir="$OUTPUT_BASE_DIR/$subject_name/scripts"
     local aparc_nifti="$subject_mri_dir/aparc+aseg.nii.gz"

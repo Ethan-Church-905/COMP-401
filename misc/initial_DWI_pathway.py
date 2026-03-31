@@ -51,6 +51,19 @@ dwi_70dir_ap_file_start = 'dwi_acq_multib_70dir_AP_acc9_1p4'
 # MAIN FUNCTIONS #
 ##################
 def convert_dcm_to_nii():
+    """Convert subject DICOM folders to gzipped NIfTI files.
+
+    Role:
+        Walks each subject directory in the study folder, detects a DICOM-containing
+        subfolder, and runs dcm2niix when NIfTI outputs are not already present.
+
+    Inputs:
+        None (uses global path_to_study).
+
+    Outputs:
+        Writes .nii.gz files into each subject folder as a side effect.
+        Returns nothing.
+    """
     data_root = Path(path_to_study)
     
     ## check if dcm2niix completed, and if not, run it and gzip files
@@ -82,6 +95,22 @@ def convert_dcm_to_nii():
         run_cmd(cmd)
 
 def rename_files(subject, file_starting_name='2026', name_start_length=0, rename=False):
+    """Preview or apply filename prefix normalization for one subject.
+
+    Role:
+        Finds files whose initial prefix matches file_starting_name and rewrites
+        them to begin with the subject identifier.
+
+    Inputs:
+        subject (str): Subject folder name.
+        file_starting_name (str): Prefix expected in raw filenames.
+        name_start_length (int): Number of leading characters to replace.
+        rename (bool): If False, only prints source/destination pairs.
+
+    Outputs:
+        Renamed files on disk when rename=True.
+        Returns nothing.
+    """
     path_to_subject = '%s/%s' % (path_to_study, subject)
     filenames = os.listdir(path_to_subject)
     for filename in filenames:
@@ -101,6 +130,20 @@ def rename_files(subject, file_starting_name='2026', name_start_length=0, rename
                         os.rename(original_filepath, destination_filepath)
 
 def duplicate_and_rename_files(subject, overwrite=False):
+    """Standardize sequence filenames and archive non-analysis files.
+
+    Role:
+        Performs subject-level file housekeeping: gzip conversion, archive moves,
+        and sequence-specific renaming for MP2RAGE, T2star, B1 map, DWI, and MT/T1W.
+
+    Inputs:
+        subject (str): Subject folder name.
+        overwrite (bool): Reserved parameter (not currently used in logic).
+
+    Outputs:
+        Renamed/moved files in the subject folder and archive subfolder.
+        Returns nothing.
+    """
     new_filepaths = []
 
     path_to_subject = '%s/%s' % (path_to_study, subject)
@@ -262,71 +305,192 @@ def duplicate_and_rename_files(subject, overwrite=False):
                 if not os.path.exists(new_filepath_niigz):
                     os.rename(original_filepath_niigz, new_filepath_niigz)
 
+def _get_phase_encoding_line(json_path):
+    """Build one FSL acqparams line from a DWI sidecar JSON.
+
+    Role:
+        Parses phase-encoding direction and readout timing metadata and converts
+        them to the FSL acqparams format used by topup/eddy.
+
+    Inputs:
+        json_path (str): Path to DWI JSON sidecar.
+
+    Outputs:
+        str: One acqparams line, for example "0 -1 0 0.052".
+        Raises ValueError if required metadata is missing/unsupported.
+    """
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    pe_direction = data.get('PhaseEncodingDirection', None)
+    if pe_direction is None:
+        raise ValueError('Missing PhaseEncodingDirection in %s' % json_path)
+
+    if 'BandwidthPerPixelPhaseEncode' in data:
+        readout = float(round(1 / data['BandwidthPerPixelPhaseEncode'], 4))
+    elif 'TotalReadoutTime' in data:
+        readout = float(data['TotalReadoutTime'])
+    else:
+        raise ValueError('Missing BandwidthPerPixelPhaseEncode/TotalReadoutTime in %s' % json_path)
+
+    if pe_direction == 'i':
+        return '1 0 0 %s' % readout
+    if pe_direction == 'i-':
+        return '-1 0 0 %s' % readout
+    if pe_direction == 'j':
+        return '0 1 0 %s' % readout
+    if pe_direction == 'j-':
+        return '0 -1 0 %s' % readout
+    if pe_direction == 'k':
+        return '0 0 1 %s' % readout
+    if pe_direction == 'k-':
+        return '0 0 -1 %s' % readout
+
+    raise ValueError('Unsupported PhaseEncodingDirection (%s) in %s' % (pe_direction, json_path))
+
+
+def _load_bvals(bval_file):
+    """Load a bval file as a 1D float array.
+
+    Role:
+        Normalizes b-value loading so downstream code can assume consistent shape.
+
+    Inputs:
+        bval_file (str): Path to .bval file.
+
+    Outputs:
+        numpy.ndarray: 1D float array of b-values.
+    """
+    return np.atleast_1d(np.loadtxt(bval_file)).astype(float)
+
+
+def _load_bvecs(bvec_file, n_vols):
+    """Load and validate bvecs in 3 x N orientation.
+
+    Role:
+        Reads bvec values, fixes common transposed layouts, and validates expected
+        dimension compatibility with the number of DWI volumes.
+
+    Inputs:
+        bvec_file (str): Path to .bvec file.
+        n_vols (int): Expected number of gradient directions/volumes.
+
+    Outputs:
+        numpy.ndarray: Array shaped (3, n_vols).
+        Raises ValueError on incompatible shape.
+    """
+    bvecs = np.loadtxt(bvec_file)
+    bvecs = np.atleast_2d(bvecs)
+
+    if bvecs.shape[0] != 3 and bvecs.shape[1] == 3:
+        bvecs = bvecs.T
+
+    if bvecs.shape[0] != 3 and bvecs.size == n_vols * 3:
+        bvecs = np.reshape(bvecs, (3, n_vols))
+
+    if bvecs.shape[0] != 3 or bvecs.shape[1] != n_vols:
+        raise ValueError('Unexpected bvec shape %s in %s (expected 3x%s)' % (bvecs.shape, bvec_file, n_vols))
+
+    return bvecs
+
+
+def _discover_raw_dwi_series(path_to_subject):
+    """Discover RAW DWI AP/PA shell series and required sidecars.
+
+    Role:
+        Scans a subject folder for files matching *_RAW_DWI_b<shell>[ _PA ].nii.gz
+        and records matching .nii.gz/.bval/.bvec/.json bundles.
+
+    Inputs:
+        path_to_subject (str): Subject directory path.
+
+    Outputs:
+        dict: Nested mapping {"AP": {shell: paths}, "PA": {shell: paths}}.
+    """
+    series_pattern = re.compile(r'^(?P<prefix>.+_RAW_DWI_b(?P<bval>\d+))(?P<pa>_PA)?\.nii\.gz$')
+    series = {'AP': {}, 'PA': {}}
+
+    for filename in os.listdir(path_to_subject):
+        m = series_pattern.match(filename)
+        if not m:
+            continue
+
+        prefix = m.group('prefix')
+        phase = 'PA' if m.group('pa') else 'AP'
+        bval_num = int(m.group('bval'))
+
+        nii = '%s/%s' % (path_to_subject, filename)
+        bval = '%s/%s.bval' % (path_to_subject, prefix + ('_PA' if phase == 'PA' else ''))
+        bvec = '%s/%s.bvec' % (path_to_subject, prefix + ('_PA' if phase == 'PA' else ''))
+        jsn = '%s/%s.json' % (path_to_subject, prefix + ('_PA' if phase == 'PA' else ''))
+
+        if not (os.path.exists(bval) and os.path.exists(bvec) and os.path.exists(jsn)):
+            continue
+
+        series[phase][bval_num] = {
+            'nii': nii,
+            'bval': bval,
+            'bvec': bvec,
+            'json': jsn,
+        }
+
+    return series
+
+
 def process_dwi(subject, overwrite=False, n_cores=18):
+    """Run DWI preprocessing, diffusion metrics, and AMICO modeling.
+
+    Role:
+        Executes the end-to-end DWI workflow for one subject: AP/PA discovery,
+        topup/applytopup, AP shell merge, bval/bvec merge, denoise, degibbs,
+        eddy, DTI metric maps, AMICO NODDI outputs, and derived AWF/ECVF maps.
+
+    Inputs:
+        subject (str): Subject folder name.
+        overwrite (bool): Recompute selected outputs when True.
+        n_cores (int): Thread count passed to MRtrix commands.
+
+    Outputs:
+        Multiple NIfTI/text outputs in the subject folder (intermediate and final).
+        Returns nothing.
+    """
     # will run denoising and de-gibbs ringing before eddy
     path_to_subject = '%s/%s' % (path_to_study, subject)
-    # take the first volume of the dwi_38_nii as the AP b=0
+
+    raw_series = _discover_raw_dwi_series(path_to_subject)
+    if len(raw_series['AP']) == 0:
+        print('No AP RAW DWI series found for subject %s' % subject)
+        return
+
+    shared_shells = sorted(set(raw_series['AP'].keys()).intersection(set(raw_series['PA'].keys())))
+    if len(shared_shells) == 0:
+        raise RuntimeError('No matched AP/PA RAW DWI shells found for subject %s' % subject)
+
+    reference_shell = shared_shells[0]
+    ap_reference = raw_series['AP'][reference_shell]
+    pa_reference = raw_series['PA'][reference_shell]
+
     ap_file = '%s/AP.nii.gz' % path_to_subject
     pa_file = '%s/PA.nii.gz' % path_to_subject
     ap_pa_file = '%s/AP_PA.nii.gz' % path_to_subject
 
-    dwi_b0_PA_nii = '%s/%s_%s.nii.gz' % (path_to_subject, subject, dwi_b0_pa_file_start)
-    dwi_b0_PA_json = '%s/%s_%s.json' % (path_to_subject, subject, dwi_b0_pa_file_start)
-    
-    dwi_38_nii = '%s/%s_%s.nii.gz' % (path_to_subject, subject, dwi_38dir_ap_file_start)
-    dwi_38_json = '%s/%s_%s.json' % (path_to_subject, subject, dwi_38dir_ap_file_start)
-    dwi_38_bval = '%s/%s_%s.bval' % (path_to_subject, subject, dwi_38dir_ap_file_start)
-    dwi_38_bvec = '%s/%s_%s.bvec' % (path_to_subject, subject, dwi_38dir_ap_file_start)
-
-    dwi_70_nii = '%s/%s_%s.nii.gz' % (path_to_subject, subject, dwi_70dir_ap_file_start)
-    dwi_70_json = '%s/%s_%s.json' % (path_to_subject, subject, dwi_70dir_ap_file_start)
-    dwi_70_bval = '%s/%s_%s.bval' % (path_to_subject, subject, dwi_70dir_ap_file_start)
-    dwi_70_bvec = '%s/%s_%s.bvec' % (path_to_subject, subject, dwi_70dir_ap_file_start)
-
-
-    if not os.path.exists(ap_file):        
-        cmd = 'fslroi %s %s/AP.nii.gz 0 1' % (dwi_38_nii, path_to_subject)
+    if not os.path.exists(ap_file):
+        cmd = 'fslroi %s %s/AP.nii.gz 0 1' % (ap_reference['nii'], path_to_subject)
         run_cmd(cmd)
 
     if not os.path.exists(pa_file):
-        cmd = 'fslroi %s %s/PA.nii.gz 0 1' % (dwi_b0_PA_nii, path_to_subject)
+        cmd = 'fslroi %s %s/PA.nii.gz 0 1' % (pa_reference['nii'], path_to_subject)
         run_cmd(cmd)
 
     if not os.path.exists(ap_pa_file):
         cmd = 'fslmerge -t %s %s %s' % (ap_pa_file, ap_file, pa_file)
         run_cmd(cmd)
 
-    # set the acq_param.txt file
-    b0_json1 = dwi_38_json
-    f = open(b0_json1, 'r')
-    b0_data1 = json.loads(f.read())
-    pe_1 = b0_data1['PhaseEncodingDirection']
-    bw_pp_pe_1 = b0_data1['BandwidthPerPixelPhaseEncode']
-    pe_bw_pp_1 = str(round(1/bw_pp_pe_1, 4))
-
-    b0_json2 = dwi_b0_PA_json
-    f = open(b0_json2, 'r')
-    b0_data2 = json.loads(f.read())
-    pe_2 = b0_data2['PhaseEncodingDirection']
-    bw_pp_pe_2 = b0_data2['BandwidthPerPixelPhaseEncode']
-    pe_bw_pp_2 = str(round(1/bw_pp_pe_2, 4))
-
-    acq = ''
-    if pe_1 == 'j':
-            acq += '0 1 0 %s\n' % pe_bw_pp_1
-    elif pe_1 == 'j-':
-        acq += '0 -1 0 %s\n' % pe_bw_pp_1
-
-    if pe_2 == 'j':
-        acq += '0 1 0 %s' % pe_bw_pp_2
-    elif pe_2 == 'j-':
-        acq += '0 -1 0 %s' % pe_bw_pp_2
-
+    # set the acq_param.txt file from matched AP/PA pair
     acq_params_txt = '%s/acq_param.txt' % path_to_subject
-
-    file1 = open(acq_params_txt, 'w')
-    file1.write(acq)
-    file1.close()
+    acq = _get_phase_encoding_line(ap_reference['json']) + '\n' + _get_phase_encoding_line(pa_reference['json'])
+    with open(acq_params_txt, 'w') as file1:
+        file1.write(acq)
 
     imain = ap_pa_file
     datain = acq_params_txt
@@ -336,70 +500,40 @@ def process_dwi(subject, overwrite=False, n_cores=18):
     cmd = 'topup --imain=%s --datain=%s --config=%s --out=%s' % (
         imain, datain, config, out
     )
-    
+
     ap_pa_topup_fieldcoef = '%s/AP_PA_topup_fieldcoef.nii.gz' % path_to_subject
     if not os.path.exists(ap_pa_topup_fieldcoef):
         run_cmd(cmd)
 
-    # combine the dwi38dir and dwi70dir
-    dwi_38dir_70dir = '%s/dwi_38dir_70dir.nii.gz' % (path_to_subject)
-    cmd = 'fslmerge -t %s %s %s' % (dwi_38dir_70dir, dwi_38_nii, dwi_70_nii)
+    # combine all AP RAW DWI shells (e.g., b300/b700/b2500)
+    ap_shells = sorted(raw_series['AP'].keys())
+    dwi_38dir_70dir = '%s/dwi_AP_combined.nii.gz' % path_to_subject
+    ap_nii_files = [raw_series['AP'][shell]['nii'] for shell in ap_shells]
+    cmd = 'fslmerge -t %s %s' % (dwi_38dir_70dir, ' '.join(ap_nii_files))
     if not os.path.exists(dwi_38dir_70dir):
         run_cmd(cmd)
 
-    # combine their bvals
-    f1 = open(dwi_38_bval, 'r')
-    f1_vals = ((f1.readlines())[0]).split('\n')[0]
-    f1.close()
-    f2 = open(dwi_70_bval, 'r')
-    f2_vals = ((f2.readlines())[0]).split('\n')[0]
-    f2.close()
+    # combine shell bvals and bvecs in shell order
+    dwi_38dir_70dir_bvals = '%s/dwi_AP_combined.bval' % path_to_subject
+    dwi_38dir_70dir_bvecs = '%s/dwi_AP_combined.bvec' % path_to_subject
 
-    dwi_38dir_70dir_bvals = '%s/dwi_38dir_70dir.bval' % path_to_subject
+    merged_bvals = []
+    merged_bvecs = []
+    for shell in ap_shells:
+        shell_bvals = _load_bvals(raw_series['AP'][shell]['bval'])
+        shell_bvecs = _load_bvecs(raw_series['AP'][shell]['bvec'], len(shell_bvals))
+        merged_bvals.append(shell_bvals)
+        merged_bvecs.append(shell_bvecs)
+
+    merged_bvals = np.concatenate(merged_bvals)
+    merged_bvecs = np.concatenate(merged_bvecs, axis=1)
+
     if not os.path.exists(dwi_38dir_70dir_bvals):
-        file = open(dwi_38dir_70dir_bvals, 'w')
-        file.writelines('%s %s' % (f1_vals, f2_vals))
-        file.close()
-    
-    # combine their bvecs
-    f1 = open(dwi_38_bvec, 'r')
-    f1_vals = f1.readlines()
-    dwi_38_bvec_0 = (((f1_vals[0]).split('\n')[0]).split(' '))
-    dwi_38_bvec_1 = (((f1_vals[1]).split('\n')[0]).split(' '))
-    dwi_38_bvec_2 = (((f1_vals[2]).split('\n')[0]).split(' '))
-    f1.close()
-    f2 = open(dwi_70_bvec, 'r')
-    f2_vals = f2.readlines()
-    dwi_70_bvec_0 = (((f2_vals[0]).split('\n')[0]).split(' '))
-    dwi_70_bvec_1 = (((f2_vals[1]).split('\n')[0]).split(' '))
-    dwi_70_bvec_2 = (((f2_vals[2]).split('\n')[0]).split(' '))
-    f2.close()
+        np.savetxt(dwi_38dir_70dir_bvals, merged_bvals[np.newaxis, :], fmt='%.8g')
 
-    # they are all lists
-    new_vec = ''
-    for i in dwi_38_bvec_0:
-        new_vec = new_vec + i + ' '
-    for i in dwi_70_bvec_0:
-        new_vec = new_vec + i + ' '
-    new_vec = new_vec + '\n'
-
-    for i in dwi_38_bvec_1:
-        new_vec = new_vec + i + ' '
-    for i in dwi_70_bvec_1:
-        new_vec = new_vec + i + ' '
-    new_vec = new_vec + '\n'
-
-    for i in dwi_38_bvec_2:
-        new_vec = new_vec + i + ' '
-    for i in dwi_70_bvec_2:
-        new_vec = new_vec + i + ' '
-
-    dwi_38dir_70dir_bvecs = '%s/dwi_38dir_70dir.bvec' % path_to_subject
     if not os.path.exists(dwi_38dir_70dir_bvecs):
-        file = open(dwi_38dir_70dir_bvecs, 'w')
-        file.writelines(new_vec)
-        file.close()
-        
+        np.savetxt(dwi_38dir_70dir_bvecs, merged_bvecs, fmt='%.8f')
+
     # apply topup
     imain = dwi_38dir_70dir
     datain = acq_params_txt
@@ -409,8 +543,8 @@ def process_dwi(subject, overwrite=False, n_cores=18):
     cmd = 'applytopup --imain=%s --inindex=1 --datain=%s --topup=%s --method=jac --out=%s' % (
         imain, datain, topup, out
     )
-    
-    ap_cor = '%s/AP_Cor.nii.gz' % (path_to_subject)
+
+    ap_cor = '%s/AP_Cor.nii.gz' % path_to_subject
     if not os.path.exists(ap_cor):
         print(cmd)
         run_cmd(cmd)
@@ -427,36 +561,34 @@ def process_dwi(subject, overwrite=False, n_cores=18):
     if not os.path.exists(ap_brain_mask):
         run_cmd(cmd)
 
-    # create index with 110 repeats of 1
-    len_index = 110
-    file = open('%s/index.txt' % path_to_subject, 'w')
-    index_to_write = '1 ' * len_index
-    index_to_write = index_to_write[:-1]
-    file.write(index_to_write)
-    file.close()
+    # create index with one entry per DWI volume
+    len_index = nib.load(dwi_38dir_70dir).shape[3]
+    with open('%s/index.txt' % path_to_subject, 'w') as file:
+        index_to_write = '1 ' * len_index
+        file.write(index_to_write.strip())
 
     # run denoising
-    dwi_38dir_70dir_denoised = '%s/dwi_38dir_70dir_denoised.nii.gz' % path_to_subject
+    dwi_38dir_70dir_denoised = '%s/dwi_AP_combined_denoised.nii.gz' % path_to_subject
     if not os.path.exists(dwi_38dir_70dir_denoised):
         cmd = 'dwidenoise %s %s -nthreads %s' % (dwi_38dir_70dir, dwi_38dir_70dir_denoised, n_cores)
         print(cmd)
         run_cmd(cmd)
 
     # run gibbs deringing on denoised image
-    dwi_38dir_70dir_denoised_degibbs = '%s/dwi_38dir_70dir_denoised_degibbs.nii.gz' % path_to_subject
+    dwi_38dir_70dir_denoised_degibbs = '%s/dwi_AP_combined_denoised_degibbs.nii.gz' % path_to_subject
     if not os.path.exists(dwi_38dir_70dir_denoised_degibbs):
         cmd = 'mrdegibbs %s %s -nthreads %s' % (dwi_38dir_70dir_denoised, dwi_38dir_70dir_denoised_degibbs, n_cores)
         print(cmd)
         run_cmd(cmd)
 
     # create the brain mask from the denoised degibbs image
-    dwi_38dir_70dir_denoised_degibbs_1stVol = '%s/dwi_38dir_70dir_denoised_degibbs_1stVol.nii.gz' % path_to_subject
+    dwi_38dir_70dir_denoised_degibbs_1stVol = '%s/dwi_AP_combined_denoised_degibbs_1stVol.nii.gz' % path_to_subject
     cmd = 'fslroi %s %s 0 1' % (dwi_38dir_70dir_denoised_degibbs, dwi_38dir_70dir_denoised_degibbs_1stVol)
     if not os.path.exists(dwi_38dir_70dir_denoised_degibbs_1stVol):
         print(cmd)
         run_cmd(cmd)
 
-    dwi_38dir_70dir_denoised_degibbs_1stVol_brain = '%s/dwi_38dir_70dir_denoised_degibbs_1stVol_brain' % path_to_subject
+    dwi_38dir_70dir_denoised_degibbs_1stVol_brain = '%s/dwi_AP_combined_denoised_degibbs_1stVol_brain' % path_to_subject
     cmd = 'bet %s %s -m -f 0.1' % (dwi_38dir_70dir_denoised_degibbs_1stVol, dwi_38dir_70dir_denoised_degibbs_1stVol_brain)
     if not os.path.exists(dwi_38dir_70dir_denoised_degibbs_1stVol_brain + '_mask.nii.gz'):
         print(cmd)
@@ -540,11 +672,11 @@ def process_dwi(subject, overwrite=False, n_cores=18):
 
     # generate a scheme file from the .bval and .bvec files
     # check if the scheme file exists
-    scheme = '%s/dwi_38dir_70dir.scheme' % (path_to_subject)
+    scheme = '%s/dwi_AP_combined.scheme' % (path_to_subject)
 
     dwi_preprocessed_file = '%s/AP_eddy_unwarped_denoised_degibbs.nii.gz' % path_to_subject
-    bvals_file = '%s/dwi_38dir_70dir.bval' % path_to_subject
-    bvecs_file = '%s/dwi_38dir_70dir.bvec' % path_to_subject
+    bvals_file = '%s/dwi_AP_combined.bval' % path_to_subject
+    bvecs_file = '%s/dwi_AP_combined.bvec' % path_to_subject
     mask_filename = dwi_38dir_70dir_denoised_degibbs_1stVol_brain + '_mask.nii.gz'
 
     # if the file does not exist, run the function
@@ -643,6 +775,18 @@ def process_dwi(subject, overwrite=False, n_cores=18):
 # HELPER FUNCTIONS #
 ####################
 def run_cmd(sys_cmd, outputs=False):
+    """Execute a shell command and capture stdout/stderr.
+
+    Role:
+        Central command runner used by preprocessing steps for external tools.
+
+    Inputs:
+        sys_cmd (str): Shell command string to execute.
+        outputs (bool): If True, print stdout in addition to stderr.
+
+    Outputs:
+        tuple[bytes, bytes]: (stdout, stderr) from the subprocess.
+    """
     print(sys_cmd)
     p = subprocess.Popen(sys_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     stdout, stderr = p.communicate()
@@ -662,6 +806,21 @@ def is_dicom(file_path):
         return False
     
 def shutil_copy_overwrite(original, new, overwrite=False):
+    """Copy an image file and its paired JSON sidecar.
+
+    Role:
+        Helper to copy a file while optionally overwriting and mirroring its
+        sidecar metadata file when present.
+
+    Inputs:
+        original (str): Source image path.
+        new (str): Destination image path.
+        overwrite (bool): If True, overwrite existing destination.
+
+    Outputs:
+        Copies files on disk as side effects.
+        Returns nothing.
+    """
     
     if not os.path.exists(original):
         print('%s does not exist' % original)
