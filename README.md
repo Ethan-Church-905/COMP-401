@@ -9,7 +9,7 @@ Winter 2026 COMP 401 Project
 ### Data Setup ###
 
 ```
-~/Data/
+/export01/data/Ethan-COMP-401
 └── subject_ID/
     ├── T1/
     │   ├── {Raw_T1}.nii
