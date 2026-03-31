@@ -35,6 +35,7 @@ SUBJECT_ID=""
 echo "Starting DICOM to NIfTI conversion for T1 and DWI scans..."
 
 # Convert all 4 T1 folders
+'''
 echo "Converting T1 scans (4 folders per subject)..."
 for t1_entry in "${T1_FOLDERS[@]}"; do
     # Parse the entry (format: SEARCH_TERM:FILE_SUFFIX)
@@ -49,6 +50,7 @@ for t1_entry in "${T1_FOLDERS[@]}"; do
         ./convert_dicom_to_nifti_T1.sh "$BASE_DICOM_DIR" "$NIFTI_BASE_DIR" "$T1_OUT_SUB_DIR" "$T1_SEARCH_TERM" "$T1_FILE_SUFFIX"
     fi
 done
+'''
 
 # Convert all 6 DWI folders
 echo "Converting DWI scans (6 folders per subject)..."

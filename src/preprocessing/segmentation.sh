@@ -4,20 +4,18 @@
 # MRI scans for multiple subjects or a single subject.
 
 # Check if the correct number of arguments is provided
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-    echo "Usage: $0 <nifti_base_dir> <synthseg_subjects_dir> [<subject_id>]"
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    echo "Usage: $0 <nifti_base_dir> [<subject_id>]"
     exit 1
 fi
 
 export CUDA_VISIBLE_DEVICES=""
 # Define input parameters
 NIFTI_BASE_DIR="$1"
-OUTPUT_BASE_DIR="$2"   # Output root for SynthSeg-derived per-subject files
-SUBJECT_ID="$3"        # Optional subject ID to process a single subject
+SUBJECT_ID="$2"        # Optional subject ID to process a single subject
 
 # Log input parameters for reference
 echo "NIfTI base directory: $NIFTI_BASE_DIR"
-echo "SynthSeg output directory: $OUTPUT_BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only for subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 echo "Starting FreeSurfer SynthSeg 2.0 processing for T1 scans..."
@@ -32,9 +30,9 @@ fi
 # Function to process a single subject
 segment_subject() {
     local subject_name="$1"
-    local t1_nifti_file="$NIFTI_BASE_DIR/$subject_name/T1/${subject_name}_T1_UNI.nii.gz"
-    local subject_mri_dir="$OUTPUT_BASE_DIR/$subject_name/mri"
-    local subject_scripts_dir="$OUTPUT_BASE_DIR/$subject_name/scripts"
+    local t1_nifti_file="$NIFTI_BASE_DIR/$subject_name/T1/${subject_name}_RAW_T1_UNI.nii.gz"
+    local subject_mri_dir="$NIFTI_BASE_DIR/$subject_name/mri"
+    local subject_scripts_dir="$NIFTI_BASE_DIR/$subject_name/scripts"
     local aparc_nifti="$subject_mri_dir/aparc+aseg.nii.gz"
     local synthseg_brainmask="$subject_mri_dir/brainmask.nii.gz"
     local synthseg_brain="$subject_mri_dir/brain.nii.gz"
@@ -58,7 +56,8 @@ segment_subject() {
     mri_synthseg \
         --i "$t1_nifti_file" \
         --o "$aparc_nifti" \
-        --parc
+        --parc \
+        --cpu
 
     if [ $? -ne 0 ]; then
         echo "mri_synthseg failed for subject $subject_name."
@@ -66,10 +65,10 @@ segment_subject() {
     fi
 
     # Create brainmask/brain image for compatibility with existing tooling.
-    fslmaths "$aparc_nifti" -bin "$synthseg_brainmask"
-    fslmaths "$t1_nifti_file" -mul "$synthseg_brainmask" "$synthseg_brain"
+    #fslmaths "$aparc_nifti" -bin "$synthseg_brainmask"
+    #fslmaths "$t1_nifti_file" -mul "$synthseg_brainmask" "$synthseg_brain"
 
-    touch "$subject_scripts_dir/synthseg.done"
+    #touch "$subject_scripts_dir/synthseg.done"
 }
 
 if [ -n "$SUBJECT_ID" ]; then
