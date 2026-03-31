@@ -21,19 +21,17 @@
 #        - Caudal middle frontal (L/R)
 #
 # Usage:
-#   roi_conversion.sh <synthseg_subjects_dir> <nifti_base_dir> [<subject_id>]
+#   roi_conversion.sh <synthseg_subjects_dir> [<subject_id>]
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-	echo "Usage: $0 <synthseg_subjects_dir> <nifti_base_dir> [<subject_id>]"
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+	echo "Usage: $0 <synthseg_subjects_dir> [<subject_id>]"
 	exit 1
 fi
 
 SUBJECTS_DIR="$1"
-NIFTI_BASE_DIR="$2"
-SUBJECT_ID="$3"   # optional
+SUBJECT_ID="$2"   # optional
 
 echo "SynthSeg subjects directory: $SUBJECTS_DIR"
-echo "NIfTI base directory: $NIFTI_BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
 
 extract_binary_roi() {
@@ -96,8 +94,8 @@ process_subject() {
 		return
 	fi
 
-	# Output ROIs to NIFTI_BASE_DIR/subject/T1/Rois/ per organizational setup
-	local roi_output_dir="$NIFTI_BASE_DIR/$subject_name/T1/Rois"
+	# Output ROIs to SUBJECTS_DIR/subject/Rois/ per organizational setup
+	local roi_output_dir="$SUBJECTS_DIR/$subject_name/Rois"
 
 	# Creates an output folder
 	mkdir -p "$roi_output_dir"
