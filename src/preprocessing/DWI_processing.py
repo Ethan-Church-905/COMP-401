@@ -241,6 +241,7 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 	acq = _get_phase_encoding_line(ap_reference['json']) + '\n' + _get_phase_encoding_line(pa_reference['json'])
 	with open(acq_params_txt, 'w') as file1:
 		file1.write(acq)
+	print('acq_param.txt contents:\n%s' % acq)
 
 	imain = ap_pa_file
 	datain = acq_params_txt
@@ -431,10 +432,11 @@ def run_cmd(sys_cmd, outputs=False):
 		print(completed.stdout)
 	if completed.returncode != 0:
 		raise RuntimeError(
-			'Command failed with exit code %s: %s\n%s' % (
+			'Command failed with exit code %s: %s\nSTDERR: %s\nSTDOUT: %s' % (
 				completed.returncode,
 				sys_cmd,
-				completed.stderr.strip() or completed.stdout.strip()
+				completed.stderr.strip(),
+				completed.stdout.strip(),
 			)
 		)
 	return completed.stdout, completed.stderr
