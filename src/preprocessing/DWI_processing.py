@@ -18,6 +18,34 @@ study = 'Misc_data'
 subjects = ['MS_WEH_023_19-10-22_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
 
+
+def _get_subject_directory(subject):
+	"""Return the absolute subject directory path."""
+	return os.path.expanduser('%s/%s' % (path_to_study, subject))
+
+
+def _get_dwi_directory(subject):
+	"""Resolve the directory containing a subject's RAW DWI series.
+
+	Supports both of these layouts:
+	1. <study>/<subject>/*.nii.gz
+	2. <study>/<subject>/DWI/*.nii.gz
+	"""
+	subject_dir = _get_subject_directory(subject)
+	candidate_dirs = [subject_dir, '%s/DWI' % subject_dir]
+
+	for candidate in candidate_dirs:
+		if os.path.isdir(candidate):
+			series = _discover_raw_dwi_series(candidate)
+			if len(series['AP']) > 0 or len(series['PA']) > 0:
+				return candidate
+
+	for candidate in candidate_dirs:
+		if os.path.isdir(candidate):
+			return candidate
+
+	raise FileNotFoundError('Could not find subject or DWI directory for %s' % subject)
+
 def convert_dcm_to_nii():
     """Convert subject DICOM folders to gzipped NIfTI files.
 
@@ -150,7 +178,7 @@ def _discover_raw_dwi_series(path_to_subject):
 
 def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 	"""Run DWI preprocessing through DTI metric map generation only."""
-	path_to_subject = '%s/%s' % (path_to_study, subject)
+	path_to_subject = _get_dwi_directory(subject)
 
 	raw_series = _discover_raw_dwi_series(path_to_subject)
 	if len(raw_series['AP']) == 0:
