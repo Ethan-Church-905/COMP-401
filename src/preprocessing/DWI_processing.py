@@ -14,9 +14,18 @@ from pathlib import Path
 
 
 path_to_data = '/export01/data'
+path_to_dicoms = '/data/rudko/Ethan-COMP-401'
 study = 'Ethan-COMP-401'
-subjects = ['HC_AM_071_15-11-23_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
+subjects = ['HC_AM_071_15-11-23_3T']
+'''
+subjects = sorted([
+	subject_name
+	for subject_name in os.listdir(path_to_study)
+	if subject_name.startswith('HC')
+	and os.path.isdir(os.path.join(path_to_study, subject_name))
+])
+'''
 
 def _get_subject_directory(subject):
 	"""Return the absolute subject directory path."""
@@ -45,7 +54,7 @@ def _get_dwi_directory(subject):
 
 	raise FileNotFoundError('Could not find subject or DWI directory for %s' % subject)
 
-
+'''
 def _resolve_fsl_config(config_name):
 	"""Resolve an FSL config file name to a concrete path."""
 	if os.path.isabs(config_name) and os.path.exists(config_name):
@@ -71,7 +80,7 @@ def _resolve_fsl_config(config_name):
 	raise FileNotFoundError(
 		'Could not locate FSL config file %s. Set FSLDIR or pass an absolute config path.' % config_name
 	)
-
+'''
 
 def convert_dcm_to_nii():
     """Convert subject DICOM folders to gzipped NIfTI files.
@@ -88,6 +97,7 @@ def convert_dcm_to_nii():
         Returns nothing.
     """
     data_root = Path(path_to_study)
+    dicoms_root = Path(path_to_dicoms)
     
     ## check if dcm2niix completed, and if not, run it and gzip files
     for subject_folder in data_root.iterdir():
@@ -375,7 +385,7 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 		b_val = np.loadtxt(combined_dwi_bvals)
 		b_vec = np.loadtxt(combined_dwi_bvecs)
 		b_vec = np.reshape(b_vec, (3, len(b_val)))
-		grad_tab = gradient_table(b_val, b_vec)
+		grad_tab = gradient_table(b_val, bvecs=b_vec)
 
 		img_dat_denoised = (nib.load(ap_eddy_unwarped_denoised_degibbs)).get_fdata()
 		binary_mask = (nib.load(combined_dwi_denoised_degibbs_1stVol_brain + '_mask.nii.gz')).get_fdata()
