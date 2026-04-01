@@ -375,7 +375,7 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 		b_val = np.loadtxt(combined_dwi_bvals)
 		b_vec = np.loadtxt(combined_dwi_bvecs)
 		b_vec = np.reshape(b_vec, (3, len(b_val)))
-		grad_tab = gradient_table(b_val, b_vec)
+		grad_tab = gradient_table(b_val, bvecs=b_vec)
 
 		img_dat_denoised = (nib.load(ap_eddy_unwarped_denoised_degibbs)).get_fdata()
 		binary_mask = (nib.load(combined_dwi_denoised_degibbs_1stVol_brain + '_mask.nii.gz')).get_fdata()
