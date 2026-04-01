@@ -18,7 +18,6 @@ study = 'Ethan-COMP-401'
 subjects = ['HC_AM_071_15-11-23_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
 
-
 def _get_subject_directory(subject):
 	"""Return the absolute subject directory path."""
 	return os.path.expanduser('%s/%s' % (path_to_study, subject))
@@ -45,6 +44,34 @@ def _get_dwi_directory(subject):
 			return candidate
 
 	raise FileNotFoundError('Could not find subject or DWI directory for %s' % subject)
+
+
+def _resolve_fsl_config(config_name):
+	"""Resolve an FSL config file name to a concrete path."""
+	if os.path.isabs(config_name) and os.path.exists(config_name):
+		return config_name
+
+	search_paths = [os.getcwd()]
+	fsldir = os.environ.get('FSLDIR')
+	if fsldir:
+		search_paths.append(os.path.join(fsldir, 'etc', 'flirtsch'))
+
+	search_paths.extend([
+		'/usr/local/fsl/etc/flirtsch',
+		'/opt/fsl/etc/flirtsch',
+		'/usr/share/fsl/etc/flirtsch',
+		'/usr/share/fsl/5.0/etc/flirtsch',
+	])
+
+	for directory in search_paths:
+		candidate = os.path.join(directory, config_name)
+		if os.path.exists(candidate):
+			return candidate
+
+	raise FileNotFoundError(
+		'Could not locate FSL config file %s. Set FSLDIR or pass an absolute config path.' % config_name
+	)
+
 
 def convert_dcm_to_nii():
     """Convert subject DICOM folders to gzipped NIfTI files.
@@ -217,7 +244,7 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 
 	imain = ap_pa_file
 	datain = acq_params_txt
-	config = 'b02b0.cnf'  # default file in FSL's libraries
+	config = _resolve_fsl_config('b02b0.cnf')
 	out = '%s/AP_PA_topup' % path_to_subject
 
 	cmd = 'topup --imain=%s --datain=%s --config=%s --out=%s' % (
@@ -390,12 +417,26 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 def run_cmd(sys_cmd, outputs=False):
 	"""Execute a shell command and capture stdout/stderr."""
 	print(sys_cmd)
-	p = subprocess.Popen(sys_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-	stdout, stderr = p.communicate()
-	print(stderr)
-	if outputs:
-		print(stdout)
-	return stdout, stderr
+	completed = subprocess.run(
+		sys_cmd,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		shell=True,
+		text=True,
+	)
+	if completed.stderr:
+		print(completed.stderr)
+	if outputs and completed.stdout:
+		print(completed.stdout)
+	if completed.returncode != 0:
+		raise RuntimeError(
+			'Command failed with exit code %s: %s\n%s' % (
+				completed.returncode,
+				sys_cmd,
+				completed.stderr.strip() or completed.stdout.strip()
+			)
+		)
+	return completed.stdout, completed.stderr
 
 def is_dicom(file_path):
     """Check if a file is a DICOM by reading the magic number at byte 128."""
