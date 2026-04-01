@@ -245,11 +245,11 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 
 	imain = ap_pa_file
 	datain = acq_params_txt
-	config = _resolve_fsl_config('b02b0.cnf')
+	#config = _resolve_fsl_config('b02b0.cnf')
 	out = '%s/AP_PA_topup' % path_to_subject
 
-	cmd = 'topup --imain=%s --datain=%s --config=%s --out=%s' % (
-		imain, datain, config, out
+	cmd = 'topup --imain=%s --datain=%s --out=%s' % (
+		imain, datain, out
 	)
 
 	ap_pa_topup_fieldcoef = '%s/AP_PA_topup_fieldcoef.nii.gz' % path_to_subject
@@ -297,7 +297,6 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 
 	ap_cor = '%s/AP_Cor.nii.gz' % path_to_subject
 	if not os.path.exists(ap_cor):
-		print(cmd)
 		run_cmd(cmd)
 
 	# make the brain mask
@@ -322,27 +321,23 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 	combined_dwi_denoised = '%s/dwi_AP_combined_denoised.nii.gz' % path_to_subject
 	if not os.path.exists(combined_dwi_denoised):
 		cmd = 'dwidenoise %s %s -nthreads %s' % (combined_dwi_ap_shells, combined_dwi_denoised, n_cores)
-		print(cmd)
 		run_cmd(cmd)
 
 	# run gibbs deringing on denoised image
 	combined_dwi_denoised_degibbs = '%s/dwi_AP_combined_denoised_degibbs.nii.gz' % path_to_subject
 	if not os.path.exists(combined_dwi_denoised_degibbs):
 		cmd = 'mrdegibbs %s %s -nthreads %s' % (combined_dwi_denoised, combined_dwi_denoised_degibbs, n_cores)
-		print(cmd)
 		run_cmd(cmd)
 
 	# create the brain mask from the denoised degibbs image
 	combined_dwi_denoised_degibbs_1stVol = '%s/dwi_AP_combined_denoised_degibbs_1stVol.nii.gz' % path_to_subject
 	cmd = 'fslroi %s %s 0 1' % (combined_dwi_denoised_degibbs, combined_dwi_denoised_degibbs_1stVol)
 	if not os.path.exists(combined_dwi_denoised_degibbs_1stVol):
-		print(cmd)
 		run_cmd(cmd)
 
 	combined_dwi_denoised_degibbs_1stVol_brain = '%s/dwi_AP_combined_denoised_degibbs_1stVol_brain' % path_to_subject
 	cmd = 'bet %s %s -m -f 0.1' % (combined_dwi_denoised_degibbs_1stVol, combined_dwi_denoised_degibbs_1stVol_brain)
 	if not os.path.exists(combined_dwi_denoised_degibbs_1stVol_brain + '_mask.nii.gz'):
-		print(cmd)
 		run_cmd(cmd)
 
 	# run eddy
@@ -355,13 +350,12 @@ def process_dwi_until_dti(subject, overwrite=False, n_cores=18):
 	topup = '%s/AP_PA_topup' % path_to_subject
 	out = '%s/AP_eddy_unwarped_denoised_degibbs' % path_to_subject
 
-	cmd = 'eddy --imain=%s --mask=%s --index=%s --acqp=%s --bvecs=%s --bvals=%s --fwhm=0 --topup=%s --flm=quadratic --out=%s --data_is_shelled --very_verbose' % (
+	cmd = 'eddy --imain=%s --mask=%s --index=%s --acqp=%s --bvecs=%s --bvals=%s --fwhm=0 --topup=%s --flm=quadratic --out=%s --data_is_shelled --verbose' % (
 		imain, mask, index, acqp, bvecs, bvals, topup, out
 	)
 
 	ap_eddy_unwarped_denoised_degibbs = '%s/AP_eddy_unwarped_denoised_degibbs.nii.gz' % path_to_subject
 	if not os.path.exists(ap_eddy_unwarped_denoised_degibbs):
-		print(cmd)
 		run_cmd(cmd)
 
 	# run DTI
