@@ -423,6 +423,7 @@ def run_cmd(sys_cmd, outputs=False):
 		stderr=subprocess.PIPE,
 		shell=True,
 		text=True,
+		errors='replace'
 	)
 	if completed.stderr:
 		print(completed.stderr)
