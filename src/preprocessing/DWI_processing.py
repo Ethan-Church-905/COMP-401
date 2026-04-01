@@ -16,6 +16,7 @@ from pathlib import Path
 path_to_data = '/export01/data'
 path_to_dicoms = '/data/rudko/Ethan-COMP-401'
 study = 'Ethan-COMP-401'
+subjects = ['HC_JH_085_18-04-24_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
 subjects = ['HC_AM_071_15-11-23_3T']
 '''
