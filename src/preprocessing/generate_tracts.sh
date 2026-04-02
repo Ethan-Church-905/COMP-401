@@ -104,6 +104,12 @@ process_subject() {
     mkdir -p "$tract_base/thalamocortical"
     local dir_tract="$tract_base"
 
+    #checks to see if the final tract files already exist, and skip processing if they do
+    if [ -f "$dir_tract/thalamocortical/${name}_lh_thalamocortical.tck" ] && [ -f "$dir_tract/thalamocortical/${name}_rh_thalamocortical.tck" ]; then
+        echo "Thalamocortical tracts already exist for subject $subject_name. Skipping tract generation."
+        return
+    fi
+
     # 1. Convert the DWI into an uncompressed format.
     mrconvert -quiet -fslgrad "$file_bvec" "$file_bval" -datatype float32 -strides 0,0,0,1 \
         "$file_dwi" "$dir_output/DWI.mif"
