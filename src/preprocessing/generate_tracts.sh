@@ -43,7 +43,7 @@ echo "DWI data directory: $DWI_DATA_DIR"
 process_subject() {
     local subject_name="$1"
 
-    local dwi_dir="$DWI_DATA_DIR/$subject_name"
+    local dwi_dir="$DWI_DATA_DIR/$subject_name/DWI"
     
     # DWI files from DWI_processing.py
     local file_dwi="$dwi_dir/AP_eddy_unwarped_denoised_degibbs.nii.gz"
@@ -62,7 +62,7 @@ process_subject() {
     fi
 
     # ROIs in DWI space (DTIsp) from roi_registration.sh - T1/Rois/ directory
-    local dir_roi="$DWI_DATA_DIR/$subject_name/T1/Rois"
+    local dir_roi="$DWI_DATA_DIR/$subject_name/Rois"
     
     # Motor cortex ROIs (seed regions)
     local roi_mc_lh="$dir_roi/aparc+aseg_lh_motorcortex_DTIsp.nii.gz"
@@ -177,7 +177,7 @@ if [ -n "$SUBJECT_ID" ]; then
     process_subject "$SUBJECT_ID"
 else
     # Auto-discover all HC* subjects in the DWI data directory
-    for subject_dir in "$DWI_DATA_DIR"/HC*/; do
+    for subject_dir in "$DWI_DATA_DIR"/MS*/; do
         if [ ! -d "$subject_dir" ]; then
             continue
         fi
