@@ -16,16 +16,14 @@ from pathlib import Path
 path_to_data = '/export01/data'
 path_to_dicoms = '/data/rudko/Ethan-COMP-401'
 study = 'Ethan-COMP-401'
-subjects = ['HC_JH_085_18-04-24_3T']
+#subjects = ['HC_LB_083_15-04-24_3T']
 path_to_study = '%s/%s' % (path_to_data, study)
-'''
 subjects = sorted([
 	subject_name
 	for subject_name in os.listdir(path_to_study)
-	if subject_name.startswith('HC')
+	if subject_name.startswith('MS')
 	and os.path.isdir(os.path.join(path_to_study, subject_name))
 ])
-'''
 
 def _get_subject_directory(subject):
 	"""Return the absolute subject directory path."""
@@ -457,7 +455,7 @@ def is_dicom(file_path):
 
 
 if __name__ == '__main__':
-	n_cores = 18
+	n_cores = 16
 	for subject in subjects:
 		process_dwi_until_dti(subject, overwrite=False, n_cores=n_cores)
 
