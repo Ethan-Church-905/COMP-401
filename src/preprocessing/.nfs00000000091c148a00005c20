@@ -30,7 +30,7 @@ if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     echo ""
     echo "Where:"
     echo "  <DWI_DATA_DIR>   - Base directory containing subject folders with DWI data (from DWI_processing.py)"
-    echo "  <SUBJECT_ID>     - Optional: Process only this subject (must begin with HC or MS)"
+    echo "  <SUBJECT_ID>     - Optional: Process only this subject (must begin with HC)"
     exit 1
 fi
 
@@ -103,12 +103,6 @@ process_subject() {
     local dir_output="$tract_base"
     mkdir -p "$tract_base/thalamocortical"
     local dir_tract="$tract_base"
-
-    #checks to see if the final tract files already exist, and skip processing if they do
-    if [ -f "$dir_tract/thalamocortical/${name}_lh_thalamocortical.tck" ] && [ -f "$dir_tract/thalamocortical/${name}_rh_thalamocortical.tck" ]; then
-        echo "Thalamocortical tracts already exist for subject $subject_name. Skipping tract generation."
-        return
-    fi
 
     # 1. Convert the DWI into an uncompressed format.
     mrconvert -quiet -fslgrad "$file_bvec" "$file_bval" -datatype float32 -strides 0,0,0,1 \
@@ -183,7 +177,7 @@ if [ -n "$SUBJECT_ID" ]; then
     process_subject "$SUBJECT_ID"
 else
     # Auto-discover all HC* subjects in the DWI data directory
-    for subject_dir in "$DWI_DATA_DIR"/MS_[G-Z]*/; do
+    for subject_dir in "$DWI_DATA_DIR"/MS*/; do
         if [ ! -d "$subject_dir" ]; then
             continue
         fi
