@@ -98,6 +98,7 @@ process_subject() {
         --sd /subject/FastSurfer \
         --threads "$THREADS" \
         --parallel \
+        --no_hypothal \
         "${fastsurfer_mode_args[@]}"
 
     echo "[$subject_name] Completed. Output: $fs_subjects_dir/$subject_name"
