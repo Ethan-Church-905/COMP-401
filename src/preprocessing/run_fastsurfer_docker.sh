@@ -87,6 +87,7 @@ process_subject() {
 
     echo "[$subject_name] Running FastSurfer Docker on $t1_for_fastsurfer"
     DOCKER_CONTENT_TRUST=0 docker run --rm -t \
+        --user "$(id -u):$(id -g)" \
         "${docker_gpu_args[@]}" \
         -v "$subject_dir:/subject" \
         -v "$FS_LICENSE_PATH:/fs_license/license.txt:ro" \
