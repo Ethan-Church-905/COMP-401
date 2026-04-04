@@ -7,22 +7,25 @@
 
 set -euo pipefail
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-    echo "Usage: $0 <processed_base_dir> [<subject_id>]"
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+    echo "Usage: $0 <processed_base_dir> <threads> <use_cuda> [<subject_id>]"
+    echo ""
+    echo "  threads   : number of threads (e.g. 8)"
+    echo "  use_cuda  : 0 for CPU, 1 for GPU (Linux + NVIDIA)"
     echo ""
     echo "Example:"
-    echo "  $0 /export01/data/Ethan-COMP-401"
-    echo "  $0 /export01/data/Ethan-COMP-401 MS_001"
+    echo "  $0 /export01/data/Ethan-COMP-401 8 0"
+    echo "  $0 /export01/data/Ethan-COMP-401 8 1 MS_001"
     exit 1
 fi
 
 BASE_DIR="$1"          # e.g. /export01/data/Ethan-COMP-401
-SUBJECT_ID="${2:-}"    # optional single subject
+THREADS="$2"           # e.g. 8
+USE_CUDA="$3"          # 0 = CPU, 1 = GPU
+SUBJECT_ID="${4:-}"    # optional single subject
 
 FASTSURFER_IMAGE="${FASTSURFER_IMAGE:-deepmi/fastsurfer:latest}"
 FS_LICENSE_PATH="${FS_LICENSE_PATH:-${FS_LICENSE:-}}"
-THREADS="${THREADS:-8}"
-USE_CUDA="${USE_CUDA:-0}"   # set USE_CUDA=1 on Linux + NVIDIA to enable GPU
 
 echo "Processed base directory: $BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
