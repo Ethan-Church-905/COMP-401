@@ -30,6 +30,8 @@ Winter 2026 COMP 401 Project
 └── subject_ID/
     ├── T1/
     │   ├── {Raw_T1}.nii
+    │   ├── {Raw_T1_UNI}.nii
+    
     │   ├── {FreeSurfer_Processed_T1}.nii
     │   └── Rois/
     │       ├── {Raw_Rois}.nii
