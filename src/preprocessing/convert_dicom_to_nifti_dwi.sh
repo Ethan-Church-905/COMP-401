@@ -35,12 +35,9 @@ convert_subject() {
     local subject_path="$1"
     local subject_name="$2"
 
-    # Define the expected NIfTI output file path
-    local output_nifti_file="$NIFTI_BASE_DIR/$subject_name/$OUT_SUB_DIR/${subject_name}_${FILE_SUFFIX}.nii.gz"
-
-    # Check if the NIfTI file already exists
-    if [ -f "$output_nifti_file" ]; then
-        echo "NIfTI file for subject $subject_name already exists. Skipping conversion."
+    # Check if the NIfTI file(s) already exist (glob to handle dcm2niix auto-renaming suffixes)
+    if ls "$NIFTI_BASE_DIR/$subject_name/$OUT_SUB_DIR/${subject_name}_${FILE_SUFFIX}"*.nii.gz 1>/dev/null 2>&1; then
+        echo "NIfTI file(s) for subject $subject_name ($FILE_SUFFIX) already exist. Skipping conversion."
         return
     fi
 

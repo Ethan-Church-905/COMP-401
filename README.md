@@ -8,6 +8,23 @@ Winter 2026 COMP 401 Project
 
 ### Data Setup ###
 
+### RAW_DATA: ###
+```
+/data/rudko/Ethan_COMP401
+└── subject_ID/
+    ├── MP2RAGE_1mm/
+    │   ├── MP2RAGE_1mm_T1_Images_Series00[0-9][0-9]/ # all DICOM containing folders
+    │   ├── MP2RAGE_1mm_UNI_Images_Series00[0-9][0-9]/
+    │   ├── MP2RAGE_1mm_INV1_Series00[0-9][0-9]/
+    │   ├── MP2RAGE_1mm_INV2_Series00[0-9][0-9]/
+    ├── cmrr_mbep2d_diff_acc6_b2500/ # Pair of PA and AP directories for each b = 2500, 700, 300
+    │   ├── cmrr_mbep2d_diff_acc6_b2500_Series0009/ # Contains DICOMs
+    └── cmrr_mbep2d_diff_acc6_b2500_PA/
+        └── cmrr_mbep2d_diff_acc6_b2500_PA_Series00[0-9][0-9]/ # Contains DICOM
+```
+
+### Processed Data: ###
+
 ```
 /export01/data/Ethan-COMP-401
 └── subject_ID/
@@ -25,13 +42,6 @@ Winter 2026 COMP 401 Project
     └── Tractography/
         └── {all_tractography_files}
 ```
-
-
-- The raw data is all contained in the folder: '/data/rudko/Ethan_COMP401' on the rumour desktop
-- T1 Data should be in folder: /data/rudko/Ethan_COMP401/{subject_ID}/MP2RAGE_1mm/MP2RAGE_1mm_UNI_Images_Series0004
-- DWI Data is in the folder /data/rudko/Ethan_COMP401/{subject_ID}/cmrr_mbep2d_diff_acc6_b2500
-- Preprocessing Bash scripts are in the 'preprocessing' directory
-- These scripts are called by the scheduling scripts in the 'scheduler_scripts' directory
 
 
 
