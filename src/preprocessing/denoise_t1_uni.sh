@@ -64,7 +64,8 @@ process_subject() {
 
     echo "[$subject_name] Denoising UNI with MRtrix..."
     mrconvert "$uni_in" "$uni_mif" -force
-    mrfilter "$uni_mif" denoise "$uni_denoised_mif" -force
+    # mrfilter does not provide a 'denoise' mode; median is a robust noise-suppression filter for structural scans.
+    mrfilter "$uni_mif" median "$uni_denoised_mif" -force
     mrconvert "$uni_denoised_mif" "$uni_denoised" -force
 
     echo "[$subject_name] Wrote denoised UNI: $uni_denoised"

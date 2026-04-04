@@ -22,6 +22,7 @@ SUBJECT_ID="${2:-}"    # optional single subject
 FASTSURFER_IMAGE="${FASTSURFER_IMAGE:-deepmi/fastsurfer:latest}"
 FS_LICENSE_PATH="${FS_LICENSE_PATH:-${FS_LICENSE:-}}"
 THREADS="${THREADS:-8}"
+USE_CUDA="${USE_CUDA:-0}"   # set USE_CUDA=1 on Linux + NVIDIA to enable GPU
 
 echo "Processed base directory: $BASE_DIR"
 [ -n "$SUBJECT_ID" ] && echo "Processing only subject: $SUBJECT_ID" || echo "Processing all subjects"
@@ -38,6 +39,13 @@ if [ -z "$FS_LICENSE_PATH" ] || [ ! -f "$FS_LICENSE_PATH" ]; then
     exit 1
 fi
 
+if [ "$USE_CUDA" = "1" ]; then
+    if ! docker info --format '{{json .Runtimes}}' 2>/dev/null | grep -q nvidia; then
+        echo "WARNING: NVIDIA Docker runtime not detected. Falling back to CPU mode."
+        USE_CUDA="0"
+    fi
+fi
+
 process_subject() {
     local subject_name="$1"
     local subject_dir="$BASE_DIR/$subject_name"
@@ -49,16 +57,13 @@ process_subject() {
         return
     fi
 
-    local t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1.nii.gz"
+    local t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1_T1.nii.gz"
     if [ ! -f "$t1_for_fastsurfer" ]; then
-        t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1_UNI_denoised.nii.gz"
-        if [ ! -f "$t1_for_fastsurfer" ]; then
-            t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1_UNI.nii.gz"
-        fi
+        t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1.nii.gz"
     fi
 
     if [ ! -f "$t1_for_fastsurfer" ]; then
-        echo "[$subject_name] No T1 input found (RAW_T1, denoised UNI, or UNI). Skipping."
+        echo "[$subject_name] No T1 input found (RAW_T1). Skipping."
         return
     fi
 
@@ -70,8 +75,16 @@ process_subject() {
         return
     fi
 
+    local docker_gpu_args=()
+    local fastsurfer_mode_args=(--no_cuda)
+    if [ "$USE_CUDA" = "1" ]; then
+        docker_gpu_args=(--gpus all)
+        fastsurfer_mode_args=()
+    fi
+
     echo "[$subject_name] Running FastSurfer Docker on $t1_for_fastsurfer"
     docker run --rm -t \
+        "${docker_gpu_args[@]}" \
         -v "$subject_dir:/subject" \
         -v "$FS_LICENSE_PATH:/fs_license/license.txt:ro" \
         "$FASTSURFER_IMAGE" \
@@ -81,7 +94,7 @@ process_subject() {
         --sd /subject/FastSurfer \
         --threads "$THREADS" \
         --parallel \
-        --no_cuda
+        "${fastsurfer_mode_args[@]}"
 
     echo "[$subject_name] Completed. Output: $fs_subjects_dir/$subject_name"
 }
