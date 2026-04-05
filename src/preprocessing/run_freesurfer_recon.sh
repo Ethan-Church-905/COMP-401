@@ -56,7 +56,7 @@ process_subject() {
         return
     fi
 
-    local t1_input="$t1_dir/${subject_name}_RAW_T1_T1.nii.gz"
+    local t1_input="$t1_dir/${subject_name}_RAW_T1_UNI.nii.gz"
     if [ ! -f "$t1_input" ]; then
         t1_input="$t1_dir/${subject_name}_RAW_T1.nii.gz"
     fi
