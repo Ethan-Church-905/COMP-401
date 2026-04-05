@@ -60,7 +60,7 @@ process_subject() {
         return
     fi
 
-    local t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1_T1.nii.gz"
+    local t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1_UNI.nii.gz"
     if [ ! -f "$t1_for_fastsurfer" ]; then
         t1_for_fastsurfer="$t1_dir/${subject_name}_RAW_T1.nii.gz"
     fi
