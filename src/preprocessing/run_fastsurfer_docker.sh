@@ -85,9 +85,9 @@ process_subject() {
         fastsurfer_mode_args=()
     fi
 
-    # Memory limit for Docker: ~10GB should suffice for sequential hemisphere
-    # processing; increase to ~16GB+ if using --parallel.
-    local docker_mem_args=(--memory=10g --memory-swap=12g)
+    # With --parallel, both hemispheres run simultaneously; allocate generously.
+    # Host has ~62GB total / ~50GB available.
+    local docker_mem_args=(--memory=40g --memory-swap=40g)
 
     echo "[$subject_name] Running FastSurfer Docker on $t1_for_fastsurfer"
     DOCKER_CONTENT_TRUST=0 docker run --rm -t \
@@ -102,7 +102,7 @@ process_subject() {
         --sid "$subject_name" \
         --sd /subject/FastSurfer \
         --threads "$THREADS" \
-        --no_hypothal \
+        --parallel \
         "${fastsurfer_mode_args[@]}"
 
     echo "[$subject_name] Completed. Output: $fs_subjects_dir/$subject_name"
