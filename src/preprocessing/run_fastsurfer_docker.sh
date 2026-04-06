@@ -107,7 +107,17 @@ process_subject() {
 }
 
 if [ -n "$SUBJECT_ID" ]; then
-    process_subject "$SUBJECT_ID"
+    # If the ID is just a group prefix (HC or MS), process all matching subjects
+    if [ "$SUBJECT_ID" = "HC" ] || [ "$SUBJECT_ID" = "MS" ]; then
+        echo "Processing all subjects starting with '$SUBJECT_ID'..."
+        for subject_path in "$BASE_DIR"/"${SUBJECT_ID}"*; do
+            [ -d "$subject_path" ] || continue
+            subject_name="$(basename "$subject_path")"
+            process_subject "$subject_name"
+        done
+    else
+        process_subject "$SUBJECT_ID"
+    fi
 else
     for subject_path in "$BASE_DIR"/*; do
         [ -d "$subject_path" ] || continue
