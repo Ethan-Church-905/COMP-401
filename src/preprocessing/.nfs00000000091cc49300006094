@@ -79,21 +79,16 @@ process_subject() {
     fi
 
     local docker_gpu_args=()
-    local fastsurfer_mode_args=(--device cpu)
+    local fastsurfer_mode_args=(--no_cuda)
     if [ "$USE_CUDA" = "1" ]; then
         docker_gpu_args=(--gpus all)
         fastsurfer_mode_args=()
     fi
 
-    # With --parallel, both hemispheres run simultaneously; allocate generously.
-    # Host has ~62GB total / ~50GB available.
-    local docker_mem_args=(--memory=40g --memory-swap=40g)
-
     echo "[$subject_name] Running FastSurfer Docker on $t1_for_fastsurfer"
     DOCKER_CONTENT_TRUST=0 docker run --rm -t \
         --user "$(id -u):$(id -g)" \
         "${docker_gpu_args[@]}" \
-        "${docker_mem_args[@]}" \
         -v "$subject_dir:/subject" \
         -v "$FS_LICENSE_PATH:/fs_license/license.txt:ro" \
         "$FASTSURFER_IMAGE" \
@@ -102,6 +97,8 @@ process_subject() {
         --sid "$subject_name" \
         --sd /subject/FastSurfer \
         --threads "$THREADS" \
+        --parallel \
+        --no_hypothal \
         "${fastsurfer_mode_args[@]}"
 
     echo "[$subject_name] Completed. Output: $fs_subjects_dir/$subject_name"
