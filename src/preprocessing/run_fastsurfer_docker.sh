@@ -43,10 +43,7 @@ if [ -z "$FS_LICENSE_PATH" ] || [ ! -f "$FS_LICENSE_PATH" ]; then
 fi
 
 if [ "$USE_CUDA" = "1" ]; then
-    if ! docker info --format '{{json .Runtimes}}' 2>/dev/null | grep -q nvidia; then
-        echo "WARNING: NVIDIA Docker runtime not detected. Falling back to CPU mode."
-        USE_CUDA="0"
-    fi
+    echo "Requested GPU mode (CUDA). Will run Docker with '--gpus all'."
 fi
 
 process_subject() {
