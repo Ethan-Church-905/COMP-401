@@ -71,8 +71,8 @@ Winter 2026 COMP 401 Project
 - These steps are performed by the scheduler script ___.sh and __.sh
 
 ### Analyis Pathway ###
-1. Sample the DWI metrics along the tract at some number of locations(100?) 
-2. Compare to MTsat and cortical thickness from 7T space
+- NOTE: the csv files will be contained in the directory:
+
 
 
 
