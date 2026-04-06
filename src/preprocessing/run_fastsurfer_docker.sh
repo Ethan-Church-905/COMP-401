@@ -44,6 +44,8 @@ fi
 
 if [ "$USE_CUDA" = "1" ]; then
     echo "Requested GPU mode (CUDA). Will run Docker with '--gpus all'."
+else
+    echo "Requested CPU mode. FastSurfer will run with '--device cpu'."
 fi
 
 process_subject() {
