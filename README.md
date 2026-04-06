@@ -36,6 +36,7 @@ Winter 2026 COMP 401 Project
     │   └── Rois/
     │       ├── {Raw_Rois}.nii
     │       └── {Registered_Rois}.nii
+    ├── FastSurfer/ #Contains output from fastsurfer reconstruction
     ├── DWI/
     │   ├── {Raw_DWI}.nii
     │   ├── {Brain_Extracted_DWI}.nii
