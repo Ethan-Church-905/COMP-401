@@ -8,8 +8,8 @@ import nibabel as nib
 from dipy.io.streamline import load_tck
 from dipy.stats.analysis import afq_profile, gaussian_weights
 from dipy.segment.clustering import QuickBundles
-from dipy.segment.metric import (AveragePointwiseEuclideanMetric,
-                                 ResampleFeature)
+from dipy.segment.metric import AveragePointwiseEuclideanMetric
+from dipy.segment.featurespeed import ResampleFeature
 from dipy.tracking.streamline import orient_by_streamline
 
 def load_nifti(file):
@@ -22,7 +22,7 @@ def load_nifti(file):
 
 
 
-def load_tck(file):
+def load_tck_file(file):
     '''
     Loads a tck file and returns the streamlines.
     '''

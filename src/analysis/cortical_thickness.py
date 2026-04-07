@@ -7,7 +7,6 @@ Usage: python cortical_thickness.py <base_dir> <output_csv>
                   (expected layout: <base_dir>/<subject>/FastSurfer/<subject>/...)
     output_csv : path to write the resulting CSV summary
 """
-
 import sys
 import os
 from os.path import join as pjoin
