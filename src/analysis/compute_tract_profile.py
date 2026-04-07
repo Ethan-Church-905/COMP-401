@@ -35,8 +35,8 @@ def compute_tract_profile(base, out):
         lh_path = pjoin(base, subject, 'cst', subject[:-3]+'_lh_cst_edit.tck')
         rh_path = pjoin(base, subject, 'cst', subject[:-3]+'_rh_cst_edit.tck')
 
-        lh = load_tck_file(lh_path)
-        rh = load_tck_file(rh_path)
+        lh = load_tck_file(lh_path, b0_path)
+        rh = load_tck_file(rh_path, b0_path)
 
         for metric_name in METRICS:
             metric_path = pjoin(base, subject, 'metrics',
