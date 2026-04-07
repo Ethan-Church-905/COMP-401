@@ -25,7 +25,7 @@ def _resolve_dwi_dir(base, subject):
 
 
 def _resolve_brain_mask(dwi_dir):
-    """Find the brain mask with fallbacks matching generate_tracts.sh."""
+    """Find the brain mask with fallbacks matching generate_tracts.sh. Returns None if not found."""
     candidates = [
         pjoin(dwi_dir, 'combined_dwi_denoised_degibbs_1stVol_brain_mask.nii.gz'),
         pjoin(dwi_dir, 'AP_brain_mask.nii.gz'),
@@ -33,7 +33,7 @@ def _resolve_brain_mask(dwi_dir):
     for path in candidates:
         if os.path.isfile(path):
             return path
-    raise FileNotFoundError(f"No brain mask found in {dwi_dir}")
+    return None
 
 
 def compute_tract_profile(base, out):
@@ -63,6 +63,10 @@ def compute_tract_profile(base, out):
 
         dwi_dir = _resolve_dwi_dir(base, subject)
         ref_path = _resolve_brain_mask(dwi_dir)
+
+        if ref_path is None:
+            print(f"  Brain mask not found for {subject}, skipping.")
+            continue
 
         tract_dir = pjoin(base, subject, 'Tractography', 'thalamocortical')
         lh_path = pjoin(tract_dir, f'{subject}_lh_thalamocortical.tck')
