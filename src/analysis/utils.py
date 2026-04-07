@@ -22,11 +22,11 @@ def load_nifti(file):
 
 
 
-def load_tck_file(file):
+def load_tck_file(file, reference):
     '''
     Loads a tck file and returns the streamlines.
     '''
-    return load_tck(file).streamlines
+    return load_tck(file, reference).streamlines
 
 
 def get_tract_profile(bundle, metric_img, metric_affine, use_weights=False, flip=True, num_points=100):
