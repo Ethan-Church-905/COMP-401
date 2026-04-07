@@ -105,6 +105,7 @@ def compute_tract_profile(base, out, subject_id=None):
             metric_dfs[metric_name][1][subject] = rh_profile
 
     # Fill in NaN values and save each metric as a pickle file
+    os.makedirs(out, exist_ok=True)
     for metric_name in METRICS:
         lh_df, rh_df = metric_dfs[metric_name]
         lh_df.fillna(method='ffill', inplace=True)

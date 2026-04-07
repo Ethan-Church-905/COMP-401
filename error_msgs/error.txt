@@ -1,2 +1,10 @@
-/home/bic/echurch/Desktop/COMP-401/src/preprocessing/DWI_processing.py:378: UserWarning: Pass ['bvecs'] as keyword args. From version 2.0.0 passing these as positional arguments will result in an error. 
-  grad_tab = gradient_table(b_val, b_vec)
+/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py:110: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  lh_df.fillna(method='ffill', inplace=True)
+/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py:111: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
+  rh_df.fillna(method='ffill', inplace=True)
+Traceback (most recent call last):
+  File "/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py", line 125, in <module>
+    compute_tract_profile(base, out, subject_id)
+  File "/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py", line 114, in compute_tract_profile
+    with open(output_path, 'wb') as handle:
+FileNotFoundError: [Errno 2] No such file or directory: '/home/bic/echurch/Desktop/COMP-401/data/tract_profiles_testHC/fa.pkl'
