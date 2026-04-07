@@ -2,10 +2,11 @@
 cortical_thickness.py :: extracts mean cortical thickness at the motor cortex (precentral gyrus)
 from FastSurfer surface reconstructions, for each hemisphere and each subject.
 
-Usage: python cortical_thickness.py <base_dir> <output_csv>
+Usage: python cortical_thickness.py <base_dir> <output_csv> [<subject_id>]
     base_dir   : directory containing subject folders with FastSurfer output
                   (expected layout: <base_dir>/<subject>/FastSurfer/<subject>/...)
     output_csv : path to write the resulting CSV summary
+    subject_id : optional – a specific subject, or 'HC'/'MS' to process only that group
 """
 import sys
 import os
@@ -87,12 +88,19 @@ def get_whole_brain_thickness(fs_subject_dir, hemi):
     return float(np.nanmean(cortical))
 
 
-def cortical_thickness(base_dir, output_csv):
+def cortical_thickness(base_dir, output_csv, subject_id=None):
     """Extract whole-brain and motor cortex thickness for all subjects and save to CSV."""
     subjects = sorted([
         s for s in os.listdir(base_dir)
         if os.path.isdir(pjoin(base_dir, s))
     ])
+
+    # Filter subjects if a subject_id or group prefix (HC/MS) was provided
+    if subject_id is not None:
+        if subject_id in ('HC', 'MS'):
+            subjects = [s for s in subjects if s.startswith(subject_id)]
+        else:
+            subjects = [s for s in subjects if s == subject_id]
 
     records = []
 
@@ -126,4 +134,5 @@ def cortical_thickness(base_dir, output_csv):
 if __name__ == "__main__":
     base_dir = sys.argv[1]
     output_csv = sys.argv[2]
-    cortical_thickness(base_dir, output_csv)
+    subject_id = sys.argv[3] if len(sys.argv) > 3 else None
+    cortical_thickness(base_dir, output_csv, subject_id)

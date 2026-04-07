@@ -39,10 +39,19 @@ def get_tract_profile(bundle, metric_img, metric_affine, use_weights=False, flip
     '''
 
     # Reorient all the streamlines so that they are following the same direction
+    if len(bundle) == 0:
+        print("Warning: empty bundle provided to get_tract_profile, returning NaN profile.")
+        return np.full(num_points, np.nan)
+    
+
     feature = ResampleFeature(nb_points=num_points)
     d_metric = AveragePointwiseEuclideanMetric(feature)
     qb = QuickBundles(np.inf, metric=d_metric)
-    centroid_bundle = qb.cluster(bundle).centroids[0]
+    clusters = qb.cluster(bundle)
+    if len(clusters.centroids) == 0:
+        print("Warning: no centroids found in bundle, returning NaN profile.")
+        return np.full(num_points, np.nan)
+    centroid_bundle = clusters.centroids[0]
     oriented_bundle = orient_by_streamline(bundle, centroid_bundle)
 
     # Calculate weights for each streamline/node in a bundle, based on a Mahalanobis distance from the core the bundle, at that node

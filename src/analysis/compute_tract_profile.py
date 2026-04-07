@@ -2,7 +2,8 @@
 compute_tract_profile.py :: computes the along-tract profile of diffusion metrics (FA, MD, AD, RD) for each subject, and outputs the profiles as pickle files.
 The along-tract profile is essentially the value of the diffusion metric at each node along the tract. The implementation of this function is based off of work by Yeatman et al. in 2012.
 
-Usage: python compute_tract_profile.py <base_dir> <output_dir>
+Usage: python compute_tract_profile.py <base_dir> <output_dir> [<subject_id>]
+    subject_id : optional – a specific subject, or 'HC'/'MS' to process only that group
 """
 
 import pickle
@@ -36,7 +37,7 @@ def _resolve_brain_mask(dwi_dir):
     return None
 
 
-def compute_tract_profile(base, out):
+def compute_tract_profile(base, out, subject_id=None):
     '''
     This function computes the along-tract profile of diffusion metrics (FA, MD, AD, RD) for each subject, and outputs the profiles as pickle files.
     The along-tract profile is essentially the value of the diffusion metric at each node along the tract. The implementation of this function is based off of work by Yeatman et al. in 2012.
@@ -54,6 +55,13 @@ def compute_tract_profile(base, out):
         d for d in os.listdir(base)
         if os.path.isdir(pjoin(base, d))
     ])
+
+    # Filter subjects if a subject_id or group prefix (HC/MS) was provided
+    if subject_id is not None:
+        if subject_id in ('HC', 'MS'):
+            subjects = [s for s in subjects if s.startswith(subject_id)]
+        else:
+            subjects = [s for s in subjects if s == subject_id]
 
     # Initialize a pair of DataFrames (lh, rh) per metric
     metric_dfs = {m: (pd.DataFrame(), pd.DataFrame()) for m in METRICS}
@@ -112,5 +120,6 @@ if __name__ == "__main__":
     # Base directory containing all subject data
     base = sys.argv[1]
     out = sys.argv[2]
+    subject_id = sys.argv[3] if len(sys.argv) > 3 else None
     
-    compute_tract_profile(base, out)
+    compute_tract_profile(base, out, subject_id)
