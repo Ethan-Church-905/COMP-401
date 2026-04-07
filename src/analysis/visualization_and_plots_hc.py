@@ -16,6 +16,8 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats as sp_stats
@@ -172,6 +174,9 @@ def plot_node_correlation(profile_dir, thickness_df, output_dir):
             set(lh_df.columns) & set(rh_df.columns) & hc_subjects_set
         )
         if len(common_subjects) < 3:
+            print(f'  [{metric}] pkl subjects (lh): {sorted(lh_df.columns.tolist())}')
+            print(f'  [{metric}] pkl subjects (rh): {sorted(rh_df.columns.tolist())}')
+            print(f'  [{metric}] thickness subjects: {sorted(hc_subjects_set)}')
             ax.set_title(f'{METRIC_LABELS[metric]} (too few subjects)')
             continue
 
