@@ -1,10 +1,18 @@
-/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py:110: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
-  lh_df.fillna(method='ffill', inplace=True)
-/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py:111: FutureWarning: DataFrame.fillna with 'method' is deprecated and will raise in a future version. Use obj.ffill() or obj.bfill() instead.
-  rh_df.fillna(method='ffill', inplace=True)
-Traceback (most recent call last):
-  File "/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py", line 125, in <module>
-    compute_tract_profile(base, out, subject_id)
-  File "/home/bic/echurch/Desktop/COMP-401/src/analysis/compute_tract_profile.py", line 114, in compute_tract_profile
-    with open(output_path, 'wb') as handle:
-FileNotFoundError: [Errno 2] No such file or directory: '/home/bic/echurch/Desktop/COMP-401/data/tract_profiles_testHC/fa.pkl'
+Saved fig1_brain_hc.png
+Saved fig2_brain_vs_tract_hc.png
+Saved fig3_thickness_hc.png
+Saved fig4_metric_vs_thickness_hc.png
+  [fa] pkl subjects (lh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [fa] pkl subjects (rh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [fa] thickness subjects: []
+  [md] pkl subjects (lh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [md] pkl subjects (rh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [md] thickness subjects: []
+  [ad] pkl subjects (lh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [ad] pkl subjects (rh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [ad] thickness subjects: []
+  [rd] pkl subjects (lh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [rd] pkl subjects (rh): ['HC_AM_071_15-11-23_3T', 'HC_AW_073_15-09-23_3T', 'HC_CA_012_ND_3T', 'HC_CR_072_07-08-23_3T', 'HC_EM_092_28-06-24_3T', 'HC_FR_065_18-08-23_3T', 'HC_GK_070_16-08-23_3T', 'HC_IC_062_11-07-23_3T', 'HC_JH_085_18-04-24_3T', 'HC_LB_083_15-04-24_3T', 'HC_MB_036_ND_3T', 'HC_MB_075_27-10-23_3T', 'HC_MJ_061_07-07-23_3T', 'HC_SG_078_20-12-23_3T']
+  [rd] thickness subjects: []
+Saved fig5_node_correlation_hc.png
+Saved fig6_tract_profiles_hc.png
