@@ -84,8 +84,28 @@ def compute_tract_profile(base, out, subject_id=None):
             print(f"  Tract files missing for {subject}, skipping.")
             continue
 
-        lh = load_tck_file(lh_path, ref_path)
-        rh = load_tck_file(rh_path, ref_path)
+        try:
+            lh = load_tck_file(lh_path, ref_path)
+        except Exception as e:
+            print(f"  Failed to load LH tract for {subject}: {e}")
+            lh = None
+
+        try:
+            rh = load_tck_file(rh_path, ref_path)
+        except Exception as e:
+            print(f"  Failed to load RH tract for {subject}: {e}")
+            rh = None
+
+        lh_empty = lh is None or len(lh) == 0
+        rh_empty = rh is None or len(rh) == 0
+
+        if lh_empty:
+            print(f"  Warning: LH tract is empty for {subject}.")
+        if rh_empty:
+            print(f"  Warning: RH tract is empty for {subject}.")
+        if lh_empty and rh_empty:
+            print(f"  Both tracts empty for {subject}, skipping.")
+            continue
 
         for metric_name in METRICS:
             metric_path = pjoin(dwi_dir,
@@ -96,10 +116,17 @@ def compute_tract_profile(base, out, subject_id=None):
             metric_img, metric_aff = load_nifti(metric_path)
 
             # Get the along tract profile of the metric
-            lh_profile = get_tract_profile(lh, metric_img, metric_aff,
-                                            use_weights=True)
-            rh_profile = get_tract_profile(rh, metric_img, metric_aff,
-                                            use_weights=True)
+            if not lh_empty:
+                lh_profile = get_tract_profile(lh, metric_img, metric_aff,
+                                                use_weights=True)
+            else:
+                lh_profile = np.full(100, np.nan)
+
+            if not rh_empty:
+                rh_profile = get_tract_profile(rh, metric_img, metric_aff,
+                                                use_weights=True)
+            else:
+                rh_profile = np.full(100, np.nan)
 
             metric_dfs[metric_name][0][subject] = lh_profile
             metric_dfs[metric_name][1][subject] = rh_profile
