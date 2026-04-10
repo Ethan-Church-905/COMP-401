@@ -67,7 +67,8 @@ def load_thickness_data(thickness_csv):
 # Figure 1: 4-panel box plot — HC vs MS whole-brain average of each metric
 # ---------------------------------------------------------------------------
 def plot_brain_hc_vs_ms(brain_df, output_dir):
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    axes = axes.flatten()
     for ax, metric in zip(axes, METRICS):
         sns.boxplot(data=brain_df, x='group', y=metric, ax=ax, order=['HC', 'MS'])
         ax.set_title(f'Whole-Brain {METRIC_LABELS[metric]}')
@@ -86,7 +87,8 @@ def plot_brain_hc_vs_ms(brain_df, output_dir):
 def plot_brain_vs_tract(brain_df, tract_df, output_dir):
     merged = brain_df.merge(tract_df, on=['subject', 'group'], how='inner')
 
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    axes = axes.flatten()
     for ax, metric in zip(axes, METRICS):
         plot_data = pd.DataFrame({
             'subject': np.tile(merged['subject'].values, 2),
@@ -138,29 +140,34 @@ def plot_metric_vs_thickness(tract_df, thickness_df, output_dir):
     merged = tract_df.merge(thickness_df[['subject', 'motor_cortex_thickness', 'group']],
                             on=['subject', 'group'], how='inner')
 
-    fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes = axes.flatten()
     for ax, metric in zip(axes, METRICS):
         col = f'{metric}_tract'
         x = merged[col].values
         y = merged['motor_cortex_thickness'].values
         groups = merged['group'].values
 
+        title_parts = []
         for grp, color in [('HC', 'royalblue'), ('MS', 'firebrick')]:
             mask = groups == grp
-            ax.scatter(x[mask], y[mask], label=grp, color=color, alpha=0.7, edgecolors='k', linewidths=0.3)
+            ax.scatter(x[mask], y[mask], color=color, alpha=0.7, edgecolors='k', linewidths=0.3)
 
-        # Overall trend line
-        valid = ~(np.isnan(x) | np.isnan(y))
-        if np.sum(valid) > 2:
-            slope, intercept, r, p, _ = sp_stats.linregress(x[valid], y[valid])
-            x_line = np.linspace(np.nanmin(x), np.nanmax(x), 100)
-            ax.plot(x_line, slope * x_line + intercept, 'k--', linewidth=1)
-            ax.set_xlabel(f'Tract {METRIC_LABELS[metric]}')
-            ax.set_title(f'{METRIC_LABELS[metric]}  (r={r:.2f}, p={p:.3f})')
-        else:
-            ax.set_xlabel(f'Tract {METRIC_LABELS[metric]}')
-            ax.set_title(METRIC_LABELS[metric])
+            # Per-group trend line
+            xg, yg = x[mask], y[mask]
+            valid = ~(np.isnan(xg) | np.isnan(yg))
+            if np.sum(valid) > 2:
+                slope, intercept, r, p, _ = sp_stats.linregress(xg[valid], yg[valid])
+                x_line = np.linspace(np.nanmin(xg), np.nanmax(xg), 100)
+                ax.plot(x_line, slope * x_line + intercept, color=color, linestyle='--', linewidth=1)
+                title_parts.append(f'{grp}: r={r:.2f}, p={p:.3f}')
+                ax.scatter([], [], color=color, label=f'{grp} (r={r:.2f}, p={p:.3f})')
+            else:
+                ax.scatter([], [], color=color, label=grp)
 
+        ax.set_xlabel(f'Tract {METRIC_LABELS[metric]}')
+        ax.set_title(f'{METRIC_LABELS[metric]}' + (f'\n{"; ".join(title_parts)}' if title_parts else ''),
+                     fontsize=9)
         ax.set_ylabel('Motor Cortex Thickness (mm)')
         ax.legend(loc='best', fontsize='small')
         
@@ -180,7 +187,9 @@ def plot_metric_vs_thickness(tract_df, thickness_df, output_dir):
 # Figure 5: 4-panel — per-node correlation (r) with motor cortex thickness
 # ---------------------------------------------------------------------------
 def plot_node_correlation(profile_dir, thickness_df, output_dir):
-    fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+    group_colors = {'HC': 'royalblue', 'MS': 'firebrick'}
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes = axes.flatten()
 
     for ax, metric in zip(axes, METRICS):
         pkl_path = os.path.join(profile_dir, f'{metric}.pkl')
@@ -202,25 +211,33 @@ def plot_node_correlation(profile_dir, thickness_df, output_dir):
         rh_arr = rh_df[common_subjects].values
         profile_arr = (lh_arr + rh_arr) / 2.0
 
-        ct_values = thickness_df.set_index('subject').loc[
-            common_subjects, 'motor_cortex_thickness'].values.astype(float)
-
+        ct_lookup = thickness_df.set_index('subject')['motor_cortex_thickness']
+        subject_groups = [assign_group(s) for s in common_subjects]
         n_nodes = profile_arr.shape[0]
-        r_values = np.full(n_nodes, np.nan)
-        for node in range(n_nodes):
-            node_vals = profile_arr[node, :]
-            valid = ~(np.isnan(node_vals) | np.isnan(ct_values))
-            if np.sum(valid) > 2:
-                r, _ = sp_stats.pearsonr(node_vals[valid], ct_values[valid])
-                r_values[node] = r
+        x_pct = np.arange(1, n_nodes + 1)
 
-        x_pct = np.arange(1, n_nodes + 1)  # 1–100 %
-        ax.plot(x_pct, r_values, color='steelblue', linewidth=1.2)
+        for grp, color in group_colors.items():
+            grp_idx = [i for i, g in enumerate(subject_groups) if g == grp]
+            if len(grp_idx) < 3:
+                continue
+            grp_ct = ct_lookup.loc[[common_subjects[i] for i in grp_idx]].values.astype(float)
+            grp_profile = profile_arr[:, grp_idx]
+
+            r_values = np.full(n_nodes, np.nan)
+            for node in range(n_nodes):
+                node_vals = grp_profile[node, :]
+                valid = ~(np.isnan(node_vals) | np.isnan(grp_ct))
+                if np.sum(valid) > 2:
+                    r, _ = sp_stats.pearsonr(node_vals[valid], grp_ct[valid])
+                    r_values[node] = r
+            ax.plot(x_pct, r_values, color=color, linewidth=1.2, label=grp)
+
         ax.axhline(0, color='grey', linewidth=0.5, linestyle='--')
         ax.set_xlabel('% Along Tract')
         ax.set_ylabel('r (Pearson)')
         ax.set_title(METRIC_LABELS[metric])
         ax.set_xlim(1, n_nodes)
+        ax.legend(loc='best', fontsize='small')
 
     fig.suptitle('Node-wise Correlation with Motor Cortex Thickness', y=1.02)
     fig.tight_layout()
@@ -235,7 +252,8 @@ def plot_node_correlation(profile_dir, thickness_df, output_dir):
 # ---------------------------------------------------------------------------
 def plot_tract_profiles(profile_dir, thickness_df, output_dir):
     group_colors = {'HC': 'royalblue', 'MS': 'firebrick'}
-    fig, axes = plt.subplots(1, 4, figsize=(18, 4))
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes = axes.flatten()
 
     for ax, metric in zip(axes, METRICS):
         pkl_path = os.path.join(profile_dir, f'{metric}.pkl')
@@ -296,6 +314,17 @@ def main(brain_csv, tract_csv, thickness_csv, profile_dir, output_dir):
     brain_df = load_brain_data(brain_csv)
     tract_df = load_tract_data(tract_csv)
     thickness_df = load_thickness_data(thickness_csv)
+
+    n_hc = (brain_df['group'] == 'HC').sum()
+    n_ms = (brain_df['group'] == 'MS').sum()
+    print(f'Subjects (brain): {n_hc} HC, {n_ms} MS')
+
+    # Count subjects used in the correlation analysis (fig4/fig5)
+    corr_merged = tract_df.merge(thickness_df[['subject', 'motor_cortex_thickness', 'group']],
+                                 on=['subject', 'group'], how='inner')
+    n_hc_corr = (corr_merged['group'] == 'HC').sum()
+    n_ms_corr = (corr_merged['group'] == 'MS').sum()
+    print(f'Subjects (correlation): {n_hc_corr} HC, {n_ms_corr} MS')
 
     plot_brain_hc_vs_ms(brain_df, output_dir)
     plot_brain_vs_tract(brain_df, tract_df, output_dir)
