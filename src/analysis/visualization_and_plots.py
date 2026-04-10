@@ -14,9 +14,12 @@ Usage: python visualization_and_plots.py <brain_csv> <tract_csv> <thickness_csv>
 import pickle
 import sys
 import os
+import matplotlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')  # Use non-interactive backend for PNG output
+import matplotlib.ticker as mticker
 import seaborn as sns
 from scipy import stats as sp_stats
 
@@ -160,6 +163,11 @@ def plot_metric_vs_thickness(tract_df, thickness_df, output_dir):
 
         ax.set_ylabel('Motor Cortex Thickness (mm)')
         ax.legend(loc='best', fontsize='small')
+        
+        if metric in ('ad', 'rd'):
+            ax.xaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+            ax.ticklabel_format(axis='x', style='scientific', scilimits=(0, 0))
+            ax.xaxis.set_major_locator(mticker.MaxNLocator(nbins=5))
 
     fig.suptitle('Tract Diffusion Metrics vs Motor Cortex Thickness', y=1.02)
     fig.tight_layout()
