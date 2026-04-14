@@ -184,6 +184,55 @@ def plot_metric_vs_thickness(tract_df, thickness_df, output_dir):
 
 
 # ---------------------------------------------------------------------------
+# Figure 7: 4-panel scatter — whole-brain metrics vs motor cortex thickness
+# ---------------------------------------------------------------------------
+def plot_brain_metric_vs_thickness(brain_df, thickness_df, output_dir):
+    merged = brain_df.merge(thickness_df[['subject', 'motor_cortex_thickness', 'group']],
+                            on=['subject', 'group'], how='inner')
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes = axes.flatten()
+    for ax, metric in zip(axes, METRICS):
+        x = merged[metric].values
+        y = merged['motor_cortex_thickness'].values
+        groups = merged['group'].values
+
+        title_parts = []
+        for grp, color in [('HC', 'royalblue'), ('MS', 'firebrick')]:
+            mask = groups == grp
+            ax.scatter(x[mask], y[mask], color=color, alpha=0.7, edgecolors='k', linewidths=0.3)
+
+            # Per-group trend line
+            xg, yg = x[mask], y[mask]
+            valid = ~(np.isnan(xg) | np.isnan(yg))
+            if np.sum(valid) > 2:
+                slope, intercept, r, p, _ = sp_stats.linregress(xg[valid], yg[valid])
+                x_line = np.linspace(np.nanmin(xg), np.nanmax(xg), 100)
+                ax.plot(x_line, slope * x_line + intercept, color=color, linestyle='--', linewidth=1)
+                title_parts.append(f'{grp}: r={r:.2f}, p={p:.3f}')
+                ax.scatter([], [], color=color, label=f'{grp} (r={r:.2f}, p={p:.3f})')
+            else:
+                ax.scatter([], [], color=color, label=grp)
+
+        ax.set_xlabel(f'Whole-Brain {METRIC_LABELS[metric]}')
+        ax.set_title(f'{METRIC_LABELS[metric]}' + (f'\n{"; ".join(title_parts)}' if title_parts else ''),
+                     fontsize=9)
+        ax.set_ylabel('Motor Cortex Thickness (mm)')
+        ax.legend(loc='best', fontsize='small')
+
+        if metric in ('ad', 'rd'):
+            ax.xaxis.set_major_formatter(mticker.ScalarFormatter(useMathText=True))
+            ax.ticklabel_format(axis='x', style='scientific', scilimits=(0, 0))
+            ax.xaxis.set_major_locator(mticker.MaxNLocator(nbins=5))
+
+    fig.suptitle('Whole-Brain Diffusion Metrics vs Motor Cortex Thickness', y=1.02)
+    fig.tight_layout()
+    fig.savefig(os.path.join(output_dir, 'fig7_brain_metric_vs_thickness.png'), dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print('Saved fig7_brain_metric_vs_thickness.png')
+
+
+# ---------------------------------------------------------------------------
 # Figure 5: 4-panel — per-node correlation (r) with motor cortex thickness
 # ---------------------------------------------------------------------------
 def plot_node_correlation(profile_dir, thickness_df, output_dir):
@@ -330,6 +379,7 @@ def main(brain_csv, tract_csv, thickness_csv, profile_dir, output_dir):
     plot_brain_vs_tract(brain_df, tract_df, output_dir)
     plot_thickness_hc_vs_ms(thickness_df, output_dir)
     plot_metric_vs_thickness(tract_df, thickness_df, output_dir)
+    plot_brain_metric_vs_thickness(brain_df, thickness_df, output_dir)
     plot_node_correlation(profile_dir, thickness_df, output_dir)
     plot_tract_profiles(profile_dir, thickness_df, output_dir)
 
