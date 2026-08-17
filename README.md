@@ -69,7 +69,6 @@ Winter 2026 COMP 401 Project
 4. Compute DWI metrics on the DWI images
 5. Perform Probabilistic Tractography on the DWI images
 
-- These steps are performed by the scheduler script ___.sh and __.sh
 
 ### Analyis Pathway ###
 - NOTE: the csv files will be contained in the directory:
